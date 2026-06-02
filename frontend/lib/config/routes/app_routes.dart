@@ -1,5 +1,6 @@
 class AppRoutes {
   static const String splash = '/';
+  // splash is the real entry, login is reached from splash
   static const String login = '/login';
   static const String register = '/register';
   static const String registerLawyer = '/register/lawyer';
