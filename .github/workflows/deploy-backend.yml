@@ -12,17 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/wakeell/app
-            git pull origin main
-            cd backend
-            git pull origin main
-            npm ci --omit=dev
-            pm2 restart wakeell-backend || pm2 start server.js --name wakeell-backend
-            pm2 save
+      - name: Trigger deploy webhook
+        run: |
+          curl -X POST http://72.61.147.68:9000/deploy \
+            -H "x-deploy-secret: ${{ secrets.DEPLOY_SECRET }}" \
+            --fail \
+            --max-time 30
