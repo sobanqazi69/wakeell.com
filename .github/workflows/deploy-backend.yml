@@ -19,7 +19,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/wakeell/backend
+            cd /home/wakeell/app
+            git pull origin main
+            cd backend
             git pull origin main
             npm ci --omit=dev
             pm2 restart wakeell-backend || pm2 start server.js --name wakeell-backend
