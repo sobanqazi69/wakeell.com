@@ -4,7 +4,7 @@ import '../utils/debug_logger.dart';
 
 class ApiClient {
   static const String _tag = 'ApiClient';
-  static const String baseUrl = 'http://72.61.147.68:3004/api';
+  static const String baseUrl = 'https://wakeell.microdesk.tech/api';
 
   late final Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
