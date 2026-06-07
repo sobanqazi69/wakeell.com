@@ -1,9 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../config/routes/app_routes.dart';
 import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/debug_logger.dart';
 import '../cubits/auth_cubit.dart';
 import '../cubits/auth_state.dart';
 
@@ -15,6 +17,8 @@ class ClientSignupScreen extends StatefulWidget {
 }
 
 class _ClientSignupScreenState extends State<ClientSignupScreen> {
+  static const _tag = 'ClientSignupScreen';
+
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -24,8 +28,60 @@ class _ClientSignupScreenState extends State<ClientSignupScreen> {
   String? _selectedLocation;
   String? _selectedJurisdiction;
 
-  final _locations = ['London, UK', 'New York, USA', 'Dubai, UAE', 'Singapore'];
+  List<String> _cities = [];
+  bool _citiesLoading = true;
+  String? _citiesError;
+
   final _jurisdictions = ['Common Law', 'Civil Law', 'Sharia Law', 'International'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCities();
+  }
+
+  Future<void> _fetchCities() async {
+    try {
+      final response = await Dio().post<Map<String, dynamic>>(
+        'https://countriesnow.space/api/v0.1/countries/cities',
+        data: {'country': 'Pakistan'},
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+
+      final data = response.data;
+      if (data != null && data['error'] == false && data['data'] is List) {
+        final raw = (data['data'] as List).cast<String>();
+        raw.sort();
+        if (mounted) {
+          setState(() {
+            _cities = [...raw, 'Other'];
+            _citiesLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Unexpected response format');
+      }
+    } catch (e) {
+      DebugLogger.error(_tag, 'Failed to fetch cities: $e');
+      if (mounted) {
+        setState(() {
+          _cities = _fallbackCities;
+          _citiesLoading = false;
+          _citiesError = 'Using offline city list';
+        });
+      }
+    }
+  }
+
+  static const _fallbackCities = [
+    'Bahawalpur', 'Faisalabad', 'Gujranwala', 'Hyderabad', 'Islamabad',
+    'Karachi', 'Lahore', 'Multan', 'Peshawar', 'Quetta', 'Rawalpindi',
+    'Sialkot', 'Sukkur', 'Other',
+  ];
 
   @override
   void dispose() {
@@ -146,14 +202,18 @@ class _ClientSignupScreenState extends State<ClientSignupScreen> {
                         ),
                         const SizedBox(height: 18),
 
-                        // Location
+                        // Primary Location
                         const _FieldLabel(label: 'PRIMARY LOCATION'),
                         const SizedBox(height: 6),
-                        _DropdownField(
+                        if (_citiesError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(_citiesError!, style: GoogleFonts.outfit(fontSize: 10, color: AppColors.textHint)),
+                          ),
+                        _CityDropdown(
                           value: _selectedLocation,
-                          hint: 'Select City',
-                          icon: Icons.location_on_outlined,
-                          items: _locations,
+                          cities: _cities,
+                          isLoading: _citiesLoading,
                           onChanged: (v) => setState(() => _selectedLocation = v),
                         ),
                         const SizedBox(height: 18),
@@ -252,16 +312,78 @@ class _ClientSignupScreenState extends State<ClientSignupScreen> {
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  final String label;
-  const _FieldLabel({required this.label});
+// ---------- City dropdown with loading state ----------
+
+class _CityDropdown extends StatelessWidget {
+  final String? value;
+  final List<String> cities;
+  final bool isLoading;
+  final ValueChanged<String?> onChanged;
+
+  const _CityDropdown({required this.value, required this.cities, required this.isLoading, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) => Text(
-        label,
-        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.8),
-      );
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.fieldBorder),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          const Icon(Icons.location_on_outlined, size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: isLoading
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.navy),
+                        ),
+                        const SizedBox(width: 10),
+                        Text('Loading cities...', style: GoogleFonts.outfit(color: AppColors.textHint, fontSize: 14)),
+                      ],
+                    ),
+                  )
+                : DropdownButton<String>(
+                    value: value,
+                    onChanged: onChanged,
+                    hint: Text('Select City, Pakistan', style: GoogleFonts.outfit(color: AppColors.textHint, fontSize: 14)),
+                    isExpanded: true,
+                    underline: const SizedBox.shrink(),
+                    dropdownColor: AppColors.surface,
+                    menuMaxHeight: 300,
+                    style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14),
+                    icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+                    items: cities.map((city) {
+                      final isOther = city == 'Other';
+                      return DropdownMenuItem<String>(
+                        value: city,
+                        child: Text(
+                          city,
+                          style: GoogleFonts.outfit(
+                            color: isOther ? AppColors.navyMid : AppColors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: isOther ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+// ---------- Generic dropdown ----------
 
 class _DropdownField extends StatelessWidget {
   final String? value;
@@ -299,4 +421,17 @@ class _DropdownField extends StatelessWidget {
       ),
     );
   }
+}
+
+// ---------- Shared label ----------
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) => Text(
+        label,
+        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.8),
+      );
 }
