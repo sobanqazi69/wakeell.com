@@ -31,7 +31,26 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              const SizedBox(height: 48),
+              const SizedBox(height: 8),
+
+              // Back button
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.fieldBorder),
+                    ),
+                    child: const Icon(Icons.arrow_back, size: 18, color: AppColors.textPrimary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // Brand
               Text(
