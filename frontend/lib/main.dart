@@ -10,6 +10,7 @@ import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/client_signup_screen.dart';
 import 'features/auth/presentation/screens/lawyer_signup_screen.dart';
+import 'features/auth/presentation/screens/lawyer_gateway_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 
 void main() async {
@@ -46,7 +47,8 @@ class WakeellApp extends StatelessWidget {
         routes: {
           AppRoutes.splash: (_) => const SplashScreen(),
           AppRoutes.login: (_) => const LoginScreen(),
-          AppRoutes.register: (_) => const ClientSignupScreen(),
+          AppRoutes.register:       (_) => const ClientSignupScreen(),
+          AppRoutes.lawyerGateway:  (_) => const LawyerGatewayScreen(),
           AppRoutes.registerLawyer: (_) => const LawyerSignupScreen(),
           AppRoutes.home: (_) => const HomeScreen(),
         },

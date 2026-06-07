@@ -85,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           icon: Icons.balance_outlined,
                           title: 'I am a Lawyer',
                           subtitle: 'Grow your practice with Wakeell Pro',
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.registerLawyer),
+                          onTap: () => Navigator.pushNamed(context, AppRoutes.lawyerGateway),
                         ),
                       ],
                     );

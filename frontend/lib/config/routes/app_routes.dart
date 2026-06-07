@@ -3,6 +3,7 @@ class AppRoutes {
   // splash is the real entry, login is reached from splash
   static const String login = '/login';
   static const String register = '/register';
+  static const String lawyerGateway  = '/lawyer';
   static const String registerLawyer = '/register/lawyer';
   static const String home = '/home';
   static const String lawyers = '/lawyers';
