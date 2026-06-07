@@ -42,20 +42,18 @@ class _ClientSignupScreenState extends State<ClientSignupScreen> {
 
   Future<void> _fetchCities() async {
     try {
-      final response = await Dio().post<Map<String, dynamic>>(
-        'https://countriesnow.space/api/v0.1/countries/cities',
-        data: {'country': 'Pakistan'},
+      final response = await Dio().get<Map<String, dynamic>>(
+        'https://wakeell.microdesk.tech/api/cities',
+        queryParameters: {'country': 'Pakistan'},
         options: Options(
-          headers: {'Content-Type': 'application/json'},
-          receiveTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 12),
+          sendTimeout: const Duration(seconds: 8),
         ),
       );
 
       final data = response.data;
-      if (data != null && data['error'] == false && data['data'] is List) {
+      if (data != null && data['success'] == true && data['data'] is List) {
         final raw = (data['data'] as List).cast<String>();
-        raw.sort();
         if (mounted) {
           setState(() {
             _cities = [...raw, 'Other'];

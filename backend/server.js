@@ -17,6 +17,7 @@ const bookingRoutes = require('./src/routes/booking.routes');
 const sessionRoutes = require('./src/routes/session.routes');
 const reviewRoutes  = require('./src/routes/review.routes');
 const adminRoutes   = require('./src/routes/admin.routes');
+const citiesRoutes  = require('./src/routes/cities.routes');
 
 const socketHandler = require('./src/socket');
 
@@ -37,6 +38,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/reviews',  reviewRoutes);
 app.use('/api/admin',    adminRoutes);
+app.use('/api/cities',   citiesRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', db: 'mysql' }));
 

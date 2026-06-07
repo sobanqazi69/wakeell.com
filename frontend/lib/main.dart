@@ -15,10 +15,12 @@ import 'features/home/presentation/screens/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   setupLocator();
 
@@ -42,11 +44,11 @@ class WakeellApp extends StatelessWidget {
         theme: AppTheme.light,
         initialRoute: AppRoutes.splash,
         routes: {
-          AppRoutes.splash:         (_) => const SplashScreen(),
-          AppRoutes.login:          (_) => const LoginScreen(),
-          AppRoutes.register:       (_) => const ClientSignupScreen(),
+          AppRoutes.splash: (_) => const SplashScreen(),
+          AppRoutes.login: (_) => const LoginScreen(),
+          AppRoutes.register: (_) => const ClientSignupScreen(),
           AppRoutes.registerLawyer: (_) => const LawyerSignupScreen(),
-          AppRoutes.home:           (_) => const HomeScreen(),
+          AppRoutes.home: (_) => const HomeScreen(),
         },
       ),
     );
