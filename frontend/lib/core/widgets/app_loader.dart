@@ -10,7 +10,7 @@ class AppLoader {
       builder: (_) => Container(
         color: Colors.black45,
         child: const Center(
-          child: CircularProgressIndicator(color: AppColors.cyan),
+          child: CircularProgressIndicator(color: AppColors.navy),
         ),
       ),
     );

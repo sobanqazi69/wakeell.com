@@ -25,194 +25,235 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.bgGradient),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 48),
 
-                // Logo
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.surfaceContainer,
-                    boxShadow: [AppColors.cyanGlow(opacity: 0.3, blur: 24)],
-                  ),
-                  child: const Icon(Icons.gavel, color: AppColors.cyan, size: 32),
+              // Brand
+              Text(
+                'WAKEELL',
+                style: GoogleFonts.outfit(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 3,
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  'WAKEELL',
-                  style: GoogleFonts.outfit(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 4,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter the elite circle of legal precision.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
                 ),
-                const SizedBox(height: 32),
+              ),
+              const SizedBox(height: 32),
 
-                // Tagline
-                Text(
-                  'Enter the elite circle\nof legal precision.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
-                  ),
+              // Form card
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [AppColors.cardShadow(opacity: 0.07, blur: 24)],
                 ),
-                const SizedBox(height: 32),
-
-                // Email field
-                _InputField(
-                  controller: _emailCtrl,
-                  label: 'Email Address',
-                  prefixIcon: Icons.alternate_email,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-
-                // Password field
-                _InputField(
-                  controller: _passwordCtrl,
-                  label: 'Password',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscurePassword,
-                  suffixIcon: GestureDetector(
-                    onTap: () => setState(() => _obscurePassword = !_obscurePassword),
-                    child: Icon(
-                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: AppColors.onSurfaceVariant,
-                      size: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Email
+                    _FieldLabel(label: 'EMAIL ADDRESS'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _emailCtrl,
+                      hint: 'name@firma.com',
+                      prefixIcon: Icons.alternate_email,
+                      keyboardType: TextInputType.emailAddress,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
-                // Forgot password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
+                    // Password row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const _FieldLabel(label: 'PASSWORD'),
+                        GestureDetector(
+                          child: Text(
+                            'Forgot Password?',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: AppColors.navyMid,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _passwordCtrl,
+                      hint: '••••••••',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: _obscurePassword,
+                      suffixIcon: GestureDetector(
+                        onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                        child: Icon(
+                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Login button
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.navy,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Login',
+                              style: GoogleFonts.outfit(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, color: Colors.white, size: 17),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Divider
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: AppColors.divider)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'Forgot Password?',
+                      'OR CONTINUE WITH',
                       style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: AppColors.cyan,
+                        fontSize: 11,
+                        color: AppColors.textHint,
+                        letterSpacing: 0.5,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const Expanded(child: Divider(color: AppColors.divider)),
+                ],
+              ),
 
-                // Login button
-                _CyanButton(
-                  onTap: () {},
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Sign In',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF00363D),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward, color: Color(0xFF00363D), size: 18),
-                    ],
+              const SizedBox(height: 16),
+
+              // Social buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _SocialButton(
+                      label: 'Google',
+                      icon: const Icon(Icons.g_mobiledata, size: 22, color: AppColors.textPrimary),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SocialButton(
+                      label: 'Apple',
+                      icon: const Icon(Icons.apple, size: 20, color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
 
-                // Divider
-                Row(
-                  children: [
-                    const Expanded(child: Divider(color: AppColors.outlineVariant)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'or continue with',
-                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.onSurfaceVariant),
+              const SizedBox(height: 24),
+
+              // Sign up link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Don't have an account? ",
+                    style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.register),
+                    child: Text(
+                      'Sign Up',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        color: AppColors.navy,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Expanded(child: Divider(color: AppColors.outlineVariant)),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                  ),
+                ],
+              ),
 
-                // Social login
-                Row(
-                  children: [
-                    Expanded(child: _SocialButton(label: 'Google', icon: _googleIcon())),
-                    const SizedBox(width: 12),
-                    Expanded(child: _SocialButton(label: 'Apple', icon: const Icon(Icons.apple, color: AppColors.textPrimary, size: 20))),
-                  ],
-                ),
-                const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-                // Sign up link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: GoogleFonts.outfit(fontSize: 14, color: AppColors.onSurfaceVariant),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.register),
-                      child: Text(
-                        'Sign Up',
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          color: AppColors.cyan,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                // Security badges
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _SecurityBadge(icon: Icons.verified_user_outlined, label: '256-bit AES'),
-                    const SizedBox(width: 24),
-                    _SecurityBadge(icon: Icons.gavel_outlined, label: 'GDPR Compliant'),
-                  ],
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              // Security badges
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _SecurityBadge(icon: Icons.verified_user_outlined, label: '256-bit AES'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text('•', style: GoogleFonts.outfit(color: AppColors.textHint)),
+                  ),
+                  _SecurityBadge(icon: Icons.gavel_outlined, label: 'GDPR Compliant'),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _googleIcon() => Image.network(
-        'https://www.google.com/favicon.ico',
-        width: 18,
-        height: 18,
-        errorBuilder: (_, __, ___) =>
-            const Icon(Icons.g_mobiledata, color: AppColors.textPrimary, size: 22),
-      );
+class _FieldLabel extends StatelessWidget {
+  final String label;
+
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: GoogleFonts.outfit(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
 }
 
 class _InputField extends StatelessWidget {
   final TextEditingController controller;
-  final String label;
+  final String hint;
   final IconData prefixIcon;
   final bool obscureText;
   final Widget? suffixIcon;
@@ -220,7 +261,7 @@ class _InputField extends StatelessWidget {
 
   const _InputField({
     required this.controller,
-    required this.label,
+    required this.hint,
     required this.prefixIcon,
     this.obscureText = false,
     this.suffixIcon,
@@ -233,35 +274,11 @@ class _InputField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 15),
+      style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(prefixIcon, size: 20),
+        hintText: hint,
+        prefixIcon: Icon(prefixIcon, size: 18),
         suffixIcon: suffixIcon,
-      ),
-    );
-  }
-}
-
-class _CyanButton extends StatelessWidget {
-  final Widget child;
-  final VoidCallback onTap;
-
-  const _CyanButton({required this.child, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 52,
-        decoration: BoxDecoration(
-          gradient: AppColors.cyanButtonGradient,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [AppColors.cyanGlow(opacity: 0.3, blur: 16)],
-        ),
-        child: Center(child: child),
       ),
     );
   }
@@ -276,11 +293,11 @@ class _SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 50,
+      height: 48,
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.outlineVariant),
+        border: Border.all(color: AppColors.fieldBorder),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -310,12 +327,13 @@ class _SecurityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppColors.cyanDim),
-        const SizedBox(width: 5),
+        Icon(icon, size: 13, color: AppColors.textHint),
+        const SizedBox(width: 4),
         Text(
           label,
-          style: GoogleFonts.outfit(fontSize: 12, color: AppColors.onSurfaceVariant),
+          style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textHint),
         ),
       ],
     );

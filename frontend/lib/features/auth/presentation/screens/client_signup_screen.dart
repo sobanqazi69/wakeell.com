@@ -33,323 +33,257 @@ class _ClientSignupScreenState extends State<ClientSignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.bgGradient),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'WAKEELL',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                  Text(
+                    'STEP 01/02',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 8),
+
+                    // Title
+                    Text(
+                      'Create Client\nAccount',
+                      style: GoogleFonts.outfit(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Secure your identity in the legal marketplace.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Form fields
+                    _FieldLabel(label: 'FULL NAME'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _nameCtrl,
+                      hint: 'Jonathan Sterling',
+                      prefixIcon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 18),
+
+                    const _FieldLabel(label: 'WORK EMAIL'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _emailCtrl,
+                      hint: 'j.sterling@firm.com',
+                      prefixIcon: Icons.alternate_email,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 18),
+
+                    const _FieldLabel(label: 'SECURE PASSWORD'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _passwordCtrl,
+                      hint: '••••••••••••',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: _obscurePassword,
+                      suffixIcon: GestureDetector(
+                        onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                        child: Icon(
+                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    const _FieldLabel(label: 'PRIMARY LOCATION'),
+                    const SizedBox(height: 6),
+                    _DropdownField(
+                      value: _selectedLocation,
+                      hint: 'Select City',
+                      icon: Icons.location_on_outlined,
+                      items: _locations,
+                      onChanged: (v) => setState(() => _selectedLocation = v),
+                    ),
+                    const SizedBox(height: 18),
+
+                    const _FieldLabel(label: 'JURISDICTION'),
+                    const SizedBox(height: 6),
+                    _DropdownField(
+                      value: _selectedJurisdiction,
+                      hint: 'Select Law',
+                      icon: Icons.account_balance_outlined,
+                      items: _jurisdictions,
+                      onChanged: (v) => setState(() => _selectedJurisdiction = v),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Checkbox
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.gavel, color: AppColors.cyan, size: 22),
-                        const SizedBox(width: 8),
-                        Text(
-                          'WAKEELL',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                            letterSpacing: 3,
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Checkbox(
+                            value: _agreed,
+                            onChanged: (v) => setState(() => _agreed = v ?? false),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'I acknowledge the Legal Service Agreements and consent to Bi-ometric Data Processing protocols',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 28),
+
+                    // Create account button
                     GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.login),
-                      child: Text(
-                        'Sign In',
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          color: AppColors.cyan,
-                          fontWeight: FontWeight.w500,
+                      onTap: () {},
+                      child: Container(
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.navy,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Create Account',
+                            style: GoogleFonts.outfit(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+
+                    // Sign in link
+                    Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Already have an account? ',
+                            style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pushNamed(context, AppRoutes.login),
+                            child: Text(
+                              'Sign In',
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                color: AppColors.navy,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Footer
+                    Center(
+                      child: Text(
+                        'ISO 27001 Certified  •  SOC2 Type II Compliant  •  256-bit AES Encryption',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          color: AppColors.textHint,
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Step indicator
-                      Row(
-                        children: [
-                          _StepDot(number: '01', isActive: true),
-                          _StepLine(isActive: false),
-                          _StepDot(number: '02', isActive: false),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Hero section
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBg,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.white.withOpacity(0.06),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Elite Legal Governance.\nAutomated.',
-                              style: GoogleFonts.outfit(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _FeaturePill(
-                              icon: Icons.lock_outline,
-                              label: 'End-to-end encryption protocols',
-                            ),
-                            const SizedBox(height: 8),
-                            _FeaturePill(
-                              icon: Icons.account_balance_outlined,
-                              label: 'Jurisdiction-aware legal logic',
-                            ),
-                            const SizedBox(height: 8),
-                            _FeaturePill(
-                              icon: Icons.account_balance_wallet_outlined,
-                              label: 'Integrated fintech treasury',
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Form
-                      _SignupInputField(
-                        controller: _nameCtrl,
-                        label: 'Full Name',
-                        prefixIcon: Icons.person_outline,
-                      ),
-                      const SizedBox(height: 14),
-                      _SignupInputField(
-                        controller: _emailCtrl,
-                        label: 'Work Email',
-                        prefixIcon: Icons.mail_outline,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 14),
-                      _SignupInputField(
-                        controller: _passwordCtrl,
-                        label: 'Secure Password',
-                        prefixIcon: Icons.lock_outline,
-                        obscureText: _obscurePassword,
-                        suffixIcon: GestureDetector(
-                          onTap: () => setState(() => _obscurePassword = !_obscurePassword),
-                          child: Icon(
-                            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            color: AppColors.onSurfaceVariant,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _DropdownField(
-                        value: _selectedLocation,
-                        label: 'Primary Location',
-                        icon: Icons.location_on_outlined,
-                        items: _locations,
-                        onChanged: (v) => setState(() => _selectedLocation = v),
-                      ),
-                      const SizedBox(height: 14),
-                      _DropdownField(
-                        value: _selectedJurisdiction,
-                        label: 'Jurisdiction',
-                        icon: Icons.account_balance_outlined,
-                        items: _jurisdictions,
-                        onChanged: (v) => setState(() => _selectedJurisdiction = v),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Checkbox
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Checkbox(
-                              value: _agreed,
-                              onChanged: (v) => setState(() => _agreed = v ?? false),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'I acknowledge the Legal Service Agreements and consent to Bio-metric Data Processing protocols',
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                color: AppColors.onSurfaceVariant,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Create account button
-                      GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          width: double.infinity,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            gradient: AppColors.cyanButtonGradient,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [AppColors.cyanGlow(opacity: 0.3, blur: 16)],
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Create Account',
-                              style: GoogleFonts.outfit(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF00363D),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Footer
-                      Center(
-                        child: Text(
-                          'ISO 27001 Certified  •  SOC2 Type II Compliant  •  256-bit AES Encryption',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            fontSize: 10,
-                            color: AppColors.outline,
-                            height: 1.6,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _StepDot extends StatelessWidget {
-  final String number;
-  final bool isActive;
-
-  const _StepDot({required this.number, required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isActive ? AppColors.cyan : AppColors.surfaceContainer,
-        border: isActive ? null : Border.all(color: AppColors.outlineVariant),
-        boxShadow: isActive ? [AppColors.cyanGlow(opacity: 0.4, blur: 12)] : null,
-      ),
-      child: Center(
-        child: Text(
-          number,
-          style: GoogleFonts.outfit(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isActive ? const Color(0xFF00363D) : AppColors.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StepLine extends StatelessWidget {
-  final bool isActive;
-
-  const _StepLine({required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 2,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          gradient: isActive ? AppColors.cyanButtonGradient : null,
-          color: isActive ? null : AppColors.outlineVariant,
-          borderRadius: BorderRadius.circular(1),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeaturePill extends StatelessWidget {
-  final IconData icon;
+class _FieldLabel extends StatelessWidget {
   final String label;
 
-  const _FeaturePill({required this.icon, required this.label});
+  const _FieldLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: AppColors.cyan.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, color: AppColors.cyan, size: 16),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          label,
-          style: GoogleFonts.outfit(
-            fontSize: 13,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-      ],
+    return Text(
+      label,
+      style: GoogleFonts.outfit(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.8,
+      ),
     );
   }
 }
 
-class _SignupInputField extends StatelessWidget {
+class _InputField extends StatelessWidget {
   final TextEditingController controller;
-  final String label;
+  final String hint;
   final IconData prefixIcon;
   final bool obscureText;
   final Widget? suffixIcon;
   final TextInputType? keyboardType;
 
-  const _SignupInputField({
+  const _InputField({
     required this.controller,
-    required this.label,
+    required this.hint,
     required this.prefixIcon,
     this.obscureText = false,
     this.suffixIcon,
@@ -364,8 +298,8 @@ class _SignupInputField extends StatelessWidget {
       keyboardType: keyboardType,
       style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(prefixIcon, size: 19),
+        hintText: hint,
+        prefixIcon: Icon(prefixIcon, size: 18),
         suffixIcon: suffixIcon,
       ),
     );
@@ -374,14 +308,14 @@ class _SignupInputField extends StatelessWidget {
 
 class _DropdownField extends StatelessWidget {
   final String? value;
-  final String label;
+  final String hint;
   final IconData icon;
   final List<String> items;
   final ValueChanged<String?> onChanged;
 
   const _DropdownField({
     required this.value,
-    required this.label,
+    required this.hint,
     required this.icon,
     required this.items,
     required this.onChanged,
@@ -391,29 +325,35 @@ class _DropdownField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.outlineVariant),
+        border: Border.all(color: AppColors.fieldBorder),
       ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        onChanged: onChanged,
-        dropdownColor: AppColors.surfaceContainerHigh,
-        style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 19),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-        ),
-        icon: const Icon(Icons.expand_more, color: AppColors.onSurfaceVariant),
-        items: items
-            .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e, style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14)),
-                ))
-            .toList(),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Icon(icon, size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: DropdownButton<String>(
+              value: value,
+              onChanged: onChanged,
+              hint: Text(hint, style: GoogleFonts.outfit(color: AppColors.textHint, fontSize: 14)),
+              isExpanded: true,
+              underline: const SizedBox.shrink(),
+              dropdownColor: AppColors.surface,
+              style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14),
+              icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+              items: items
+                  .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e, style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14)),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
       ),
     );
   }

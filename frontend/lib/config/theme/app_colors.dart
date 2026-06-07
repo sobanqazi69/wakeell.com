@@ -2,56 +2,32 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Backgrounds
-  static const Color darkBg = Color(0xFF130F2D);
-  static const Color surfaceContainerLowest = Color(0xFF0E0928);
-  static const Color surfaceContainerLow = Color(0xFF1B1736);
-  static const Color surfaceContainer = Color(0xFF1F1C3A);
-  static const Color surfaceContainerHigh = Color(0xFF2A2645);
-  static const Color surfaceContainerHighest = Color(0xFF353150);
-  static const Color surfaceBright = Color(0xFF393555);
-  static const Color cardBg = Color(0xFF1A1040);
+  static const Color bg = Color(0xFFF5F5F7);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceVariant = Color(0xFFF9FAFB);
 
   // Brand
-  static const Color cyan = Color(0xFF00E5FF);
-  static const Color cyanDim = Color(0xFF00DAF3);
-  static const Color purple = Color(0xFF7B2FBE);
-  static const Color gold = Color(0xFFD4A843);
+  static const Color navy = Color(0xFF1A1D3A);
+  static const Color navyMid = Color(0xFF2C3063);
 
   // Text
-  static const Color onSurface = Color(0xFFE5DEFF);
-  static const Color onSurfaceVariant = Color(0xFFBAC9CC);
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB0A9C6);
+  static const Color textPrimary = Color(0xFF1A1D3A);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textHint = Color(0xFF9CA3AF);
 
   // Borders
-  static const Color outline = Color(0xFF849396);
-  static const Color outlineVariant = Color(0xFF3B494C);
-  static const Color fieldBorder = Color(0xFF2D2060);
+  static const Color fieldBorder = Color(0xFFE5E7EB);
+  static const Color divider = Color(0xFFE5E7EB);
 
   // Semantic
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color error = Color(0xFFFF4D4F);
-  static const Color success = Color(0xFF52C41A);
+  static const Color error = Color(0xFFDC2626);
+  static const Color success = Color(0xFF16A34A);
 
-  // Gradients
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [purple, cyan],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient cyanButtonGradient = LinearGradient(
-    colors: [Color(0xFF00E5FF), Color(0xFF00B8CC)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
-
-  static const LinearGradient bgGradient = LinearGradient(
-    colors: [darkBg, surfaceContainerLow],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-
-  static BoxShadow cyanGlow({double opacity = 0.25, double blur = 20}) =>
-      BoxShadow(color: cyan.withOpacity(opacity), blurRadius: blur, spreadRadius: 0);
+  static BoxShadow cardShadow({double opacity = 0.08, double blur = 20, Offset offset = const Offset(0, 4)}) =>
+      BoxShadow(
+        color: const Color(0xFF1A1D3A).withValues(alpha: opacity),
+        blurRadius: blur,
+        offset: offset,
+        spreadRadius: 0,
+      );
 }

@@ -9,12 +9,12 @@ class AppSnackbar {
       _show(context, message, AppColors.error, Icons.error_outline);
 
   static void info(BuildContext context, String message) =>
-      _show(context, message, AppColors.cyan, Icons.info_outline);
+      _show(context, message, AppColors.navy, Icons.info_outline);
 
   static void _show(BuildContext context, String message, Color color, IconData icon) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.cardBg,
+        backgroundColor: AppColors.surface,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Row(
