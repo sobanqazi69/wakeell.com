@@ -1,0 +1,167 @@
+import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/services/token_service.dart';
+import '../../../../core/utils/debug_logger.dart';
+import '../../../../core/utils/map_utils.dart';
+import '../models/user_model.dart';
+
+class AuthException implements Exception {
+  final String message;
+  const AuthException(this.message);
+  @override
+  String toString() => message;
+}
+
+class AuthRepository {
+  static const String _tag = 'AuthRepository';
+
+  final ApiClient _api;
+  final TokenService _token;
+
+  AuthRepository(this._api, this._token);
+
+  Future<UserModel> login({required String email, required String password}) async {
+    try {
+      final response = await _api.post('/auth/login', data: {
+        'email': email.trim().toLowerCase(),
+        'password': password,
+      });
+
+      final data = response.data as Map<String, dynamic>;
+      final token = handleNullableStringKey(data, 'token');
+      if (token == null) throw const AuthException('No token received from server');
+
+      await _token.saveToken(token);
+
+      final userJson = handleNullableMapKey(data, 'user');
+      if (userJson == null) throw const AuthException('Invalid response from server');
+
+      DebugLogger.log(_tag, 'Login success: ${userJson['email']}');
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'Login DioException: ${e.message}');
+      final message = _extractMessage(e) ?? 'Login failed. Please check your connection.';
+      throw AuthException(message);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'Login error: $e');
+      throw const AuthException('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<UserModel> registerClient({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+    String? location,
+    String? jurisdiction,
+  }) async {
+    try {
+      final response = await _api.post('/auth/register', data: {
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        'role': 'client',
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (location != null && location.isNotEmpty) 'location': location,
+        if (jurisdiction != null && jurisdiction.isNotEmpty) 'jurisdiction': jurisdiction,
+      });
+
+      final data = response.data as Map<String, dynamic>;
+      final token = handleNullableStringKey(data, 'token');
+      if (token == null) throw const AuthException('Registration failed: no token received');
+
+      await _token.saveToken(token);
+
+      final userJson = handleNullableMapKey(data, 'user');
+      if (userJson == null) throw const AuthException('Invalid response from server');
+
+      DebugLogger.log(_tag, 'Client registered: ${userJson['email']}');
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'Register DioException: ${e.message}');
+      final message = _extractMessage(e) ?? 'Registration failed. Please try again.';
+      throw AuthException(message);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'Register error: $e');
+      throw const AuthException('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<void> registerLawyer({
+    required String name,
+    required String email,
+    required String password,
+    required String barLicense,
+    String? phone,
+    String? bio,
+    List<String>? specializations,
+    List<String>? languages,
+    double? hourlyRate,
+  }) async {
+    try {
+      await _api.post('/auth/register/lawyer', data: {
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        'barLicense': barLicense.trim(),
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (bio != null && bio.isNotEmpty) 'bio': bio,
+        'specializations': specializations ?? [],
+        'languages': languages ?? [],
+        if (hourlyRate != null) 'hourlyRate': hourlyRate, // ignore: use_null_aware_elements
+      });
+
+      DebugLogger.log(_tag, 'Lawyer registration submitted: $email');
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'Lawyer register DioException: ${e.message}');
+      final message = _extractMessage(e) ?? 'Registration failed. Please try again.';
+      throw AuthException(message);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'Lawyer register error: $e');
+      throw const AuthException('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<UserModel?> getMe() async {
+    try {
+      final hasToken = await _token.hasToken();
+      if (!hasToken) return null;
+
+      final response = await _api.get('/auth/me');
+      final data = response.data as Map<String, dynamic>;
+      final userJson = handleNullableMapKey(data, 'user');
+      if (userJson == null) return null;
+
+      DebugLogger.log(_tag, 'getMe success');
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'getMe DioException: ${e.message}');
+      if (e.response?.statusCode == 401) {
+        await _token.clearToken();
+      }
+      return null;
+    } catch (e) {
+      DebugLogger.error(_tag, 'getMe error: $e');
+      return null;
+    }
+  }
+
+  Future<void> logout() async {
+    await _token.clearToken();
+    DebugLogger.log(_tag, 'Logged out');
+  }
+
+  String? _extractMessage(DioException e) {
+    try {
+      final data = e.response?.data;
+      if (data is Map) return data['message']?.toString();
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+}
