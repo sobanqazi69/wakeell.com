@@ -1,15 +1,20 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const sessionSchema = new mongoose.Schema({
-  booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true, unique: true },
-  roomId: { type: String, required: true, unique: true },
-  clientJoined: { type: Boolean, default: false },
-  lawyerJoined: { type: Boolean, default: false },
-  startedAt: { type: Date, default: null },
-  endedAt: { type: Date, default: null },
-  adviceSummary: { type: String, default: '' },
-  summaryWritten: { type: Boolean, default: false },
-  status: { type: String, enum: ['waiting', 'active', 'ended'], default: 'waiting' },
-}, { timestamps: true });
+const Session = sequelize.define('Session', {
+  id:             { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  bookingId:      { type: DataTypes.INTEGER, allowNull: false, unique: true },
+  roomId:         { type: DataTypes.STRING(255), allowNull: false, unique: true },
+  clientJoined:   { type: DataTypes.BOOLEAN, defaultValue: false },
+  lawyerJoined:   { type: DataTypes.BOOLEAN, defaultValue: false },
+  startedAt:      { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+  endedAt:        { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+  adviceSummary:  { type: DataTypes.TEXT, defaultValue: '' },
+  summaryWritten: { type: DataTypes.BOOLEAN, defaultValue: false },
+  status:         { type: DataTypes.ENUM('waiting', 'active', 'ended'), defaultValue: 'waiting' },
+}, {
+  tableName: 'sessions',
+  underscored: true,
+});
 
-module.exports = mongoose.model('Session', sessionSchema);
+module.exports = Session;

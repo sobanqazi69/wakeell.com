@@ -1,37 +1,66 @@
 const { v4: uuidv4 } = require('uuid');
-const Session = require('../models/Session');
-const Booking = require('../models/Booking');
+const { Session, Booking } = require('../models');
 
 exports.createSession = async (req, res) => {
-  const booking = await Booking.findById(req.params.bookingId);
-  if (!booking) return res.status(404).json({ message: 'Booking not found' });
-  if (booking.status !== 'accepted') return res.status(400).json({ message: 'Booking not accepted' });
+  try {
+    const booking = await Booking.findByPk(req.params.bookingId);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (booking.status !== 'accepted') {
+      return res.status(400).json({ message: 'Booking must be accepted before starting a session' });
+    }
 
-  let session = await Session.findOne({ booking: booking._id });
-  if (!session) {
-    session = await Session.create({ booking: booking._id, roomId: uuidv4() });
-    booking.sessionRoom = session.roomId;
-    await booking.save();
+    const isParty = booking.clientId === req.user.id || booking.lawyerId === req.user.id;
+    if (!isParty) return res.status(403).json({ message: 'Access denied' });
+
+    // Idempotent — return existing session if already created
+    let session = await Session.findOne({ where: { bookingId: booking.id } });
+    if (!session) {
+      const roomId = uuidv4();
+      session = await Session.create({ bookingId: booking.id, roomId });
+      await booking.update({ sessionRoom: roomId });
+    }
+
+    return res.json({ session });
+  } catch (err) {
+    console.error('[session.createSession]', err);
+    return res.status(500).json({ message: 'Failed to create session' });
   }
-
-  res.json({ session });
 };
 
 exports.getSession = async (req, res) => {
-  const session = await Session.findOne({ booking: req.params.bookingId }).populate('booking');
-  if (!session) return res.status(404).json({ message: 'Session not found' });
-  res.json({ session });
+  try {
+    const session = await Session.findOne({
+      where: { bookingId: req.params.bookingId },
+      include: [{ association: 'booking' }],
+    });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    return res.json({ session });
+  } catch (err) {
+    console.error('[session.getSession]', err);
+    return res.status(500).json({ message: 'Failed to fetch session' });
+  }
 };
 
 exports.writeAdviceSummary = async (req, res) => {
-  const { adviceSummary } = req.body;
-  const session = await Session.findOne({ booking: req.params.bookingId });
-  if (!session) return res.status(404).json({ message: 'Session not found' });
+  try {
+    const { adviceSummary } = req.body;
+    if (!adviceSummary) return res.status(400).json({ message: 'adviceSummary is required' });
 
-  session.adviceSummary = adviceSummary;
-  session.summaryWritten = true;
-  await session.save();
+    const session = await Session.findOne({ where: { bookingId: req.params.bookingId } });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
 
-  await Booking.findByIdAndUpdate(req.params.bookingId, { status: 'completed' });
-  res.json({ session });
+    // Only the lawyer can write the summary
+    const booking = await Booking.findByPk(req.params.bookingId);
+    if (booking.lawyerId !== req.user.id) {
+      return res.status(403).json({ message: 'Only the lawyer can write the advice summary' });
+    }
+
+    await session.update({ adviceSummary, summaryWritten: true });
+    await booking.update({ status: 'completed' });
+
+    return res.json({ session });
+  } catch (err) {
+    console.error('[session.writeAdviceSummary]', err);
+    return res.status(500).json({ message: 'Failed to write advice summary' });
+  }
 };

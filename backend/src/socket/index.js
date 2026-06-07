@@ -1,42 +1,57 @@
-const Session = require('../models/Session');
-const Booking = require('../models/Booking');
+const { Session, Booking } = require('../models');
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`);
 
     socket.on('join_room', async ({ roomId, userId, role }) => {
-      socket.join(roomId);
-      socket.data = { roomId, userId, role };
+      try {
+        socket.join(roomId);
+        socket.data = { roomId, userId, role };
 
-      const session = await Session.findOne({ roomId });
-      if (!session) return;
+        const session = await Session.findOne({ where: { roomId } });
+        if (!session) return;
 
-      if (role === 'client') session.clientJoined = true;
-      if (role === 'lawyer') session.lawyerJoined = true;
+        const update = {};
+        if (role === 'client') update.clientJoined = true;
+        if (role === 'lawyer') update.lawyerJoined = true;
 
-      if (session.clientJoined && session.lawyerJoined && !session.startedAt) {
-        session.startedAt = new Date();
-        session.status = 'active';
-        io.to(roomId).emit('session_started', { startedAt: session.startedAt });
+        await session.update(update);
+        await session.reload();
+
+        if (session.clientJoined && session.lawyerJoined && !session.startedAt) {
+          await session.update({ startedAt: new Date(), status: 'active' });
+          io.to(roomId).emit('session_started', { startedAt: session.startedAt });
+        }
+
+        io.to(roomId).emit('user_joined', { userId, role });
+      } catch (err) {
+        console.error('[socket.join_room]', err);
       }
-
-      await session.save();
-      io.to(roomId).emit('user_joined', { userId, role });
     });
 
     socket.on('send_message', ({ roomId, message, senderId, senderName }) => {
-      io.to(roomId).emit('receive_message', { message, senderId, senderName, timestamp: new Date() });
+      io.to(roomId).emit('receive_message', {
+        message,
+        senderId,
+        senderName,
+        timestamp: new Date(),
+      });
     });
 
     socket.on('timer_ended', async ({ roomId }) => {
-      const session = await Session.findOne({ roomId });
-      if (!session) return;
-      session.endedAt = new Date();
-      session.status = 'ended';
-      await session.save();
-      await Booking.findByIdAndUpdate(session.booking, { endedAt: session.endedAt });
-      io.to(roomId).emit('room_closed', { endedAt: session.endedAt });
+      try {
+        const session = await Session.findOne({ where: { roomId } });
+        if (!session) return;
+
+        const endedAt = new Date();
+        await session.update({ endedAt, status: 'ended' });
+        await Booking.update({ endedAt }, { where: { id: session.bookingId } });
+
+        io.to(roomId).emit('room_closed', { endedAt });
+      } catch (err) {
+        console.error('[socket.timer_ended]', err);
+      }
     });
 
     socket.on('disconnect', () => {
