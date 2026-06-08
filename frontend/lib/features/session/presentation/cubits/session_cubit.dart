@@ -37,9 +37,25 @@ class SessionCubit extends Cubit<SessionState> {
       );
       DebugLogger.log(_tag, 'connected to room ${tokenData.roomId}');
 
-      // 3. Enable camera and mic
-      await _room!.localParticipant?.setCameraEnabled(true);
-      await _room!.localParticipant?.setMicrophoneEnabled(true);
+      // 3. Enable mic and camera independently — don't let one failure kill the session
+      bool isMicEnabled = false;
+      bool isCameraEnabled = false;
+
+      try {
+        await _room!.localParticipant?.setMicrophoneEnabled(true);
+        isMicEnabled = true;
+      } catch (e) {
+        DebugLogger.error(_tag, 'mic enable failed (continuing): $e');
+      }
+
+      try {
+        await _room!.localParticipant?.setCameraEnabled(true);
+        isCameraEnabled = true;
+      } catch (e) {
+        DebugLogger.error(_tag, 'camera enable failed (continuing): $e');
+      }
+
+      DebugLogger.log(_tag, 'tracks: mic=$isMicEnabled camera=$isCameraEnabled');
 
       // 4. Start elapsed-time ticker
       _startTimer();
@@ -47,8 +63,8 @@ class SessionCubit extends Cubit<SessionState> {
       if (!isClosed) {
         emit(SessionConnected(
           room: _room!,
-          isMicEnabled: true,
-          isCameraEnabled: true,
+          isMicEnabled: isMicEnabled,
+          isCameraEnabled: isCameraEnabled,
           secondsElapsed: 0,
         ));
       }

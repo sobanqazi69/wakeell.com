@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../../core/utils/debug_logger.dart';
 import '../cubits/session_cubit.dart';
 import '../cubits/session_state.dart';
 
@@ -33,7 +34,11 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   Future<void> _requestPermissionsAndJoin() async {
-    await [Permission.camera, Permission.microphone].request();
+    // Request both and check results — join regardless (cubit handles partial grants)
+    final statuses = await [Permission.camera, Permission.microphone].request();
+    final camOk = statuses[Permission.camera]?.isGranted ?? false;
+    final micOk = statuses[Permission.microphone]?.isGranted ?? false;
+    DebugLogger.log('SessionScreen', 'permissions: camera=$camOk mic=$micOk');
     if (mounted) {
       context.read<SessionCubit>().join(widget.bookingId);
     }
