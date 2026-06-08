@@ -3,14 +3,24 @@ const { Lawyer, User, LawyerAvailability } = require('../models');
 
 exports.getLawyers = async (req, res) => {
   try {
-    const { category, language, minRating, page = 1, limit = 20 } = req.query;
+    const { search, category, language, minRating, page = 1, limit = 20 } = req.query;
 
     const where = { status: 'approved' };
     if (minRating) where.rating = { [Op.gte]: Number(minRating) };
 
+    const userWhere = {};
+    if (search && search.trim()) {
+      userWhere.name = { [Op.like]: `%${search.trim()}%` };
+    }
+
     const lawyers = await Lawyer.findAll({
       where,
-      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'avatar', 'location', 'jurisdiction'] }],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'avatar', 'location', 'jurisdiction'],
+        where: Object.keys(userWhere).length ? userWhere : undefined,
+      }],
       limit: Number(limit),
       offset: (Number(page) - 1) * Number(limit),
       order: [['rating', 'DESC']],
