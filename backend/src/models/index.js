@@ -5,6 +5,7 @@ const Booking          = require('./Booking');
 const Session          = require('./Session');
 const Review           = require('./Review');
 const Notification     = require('./Notification');
+const ChatMessage      = require('./ChatMessage');
 
 // ── User ↔ Lawyer ─────────────────────────────────────────────────────────────
 User.hasOne(Lawyer, { foreignKey: 'userId', as: 'lawyerProfile', onDelete: 'CASCADE' });
@@ -45,4 +46,12 @@ Review.belongsTo(User, { foreignKey: 'lawyerId', as: 'lawyerUser' });
 User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications', onDelete: 'CASCADE' });
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-module.exports = { User, Lawyer, LawyerAvailability, Booking, Session, Review, Notification };
+// ── ChatMessage ↔ Booking ─────────────────────────────────────────────────────
+Booking.hasMany(ChatMessage, { foreignKey: 'bookingId', as: 'chatMessages', onDelete: 'CASCADE' });
+ChatMessage.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+
+// ── ChatMessage ↔ User (sender) ───────────────────────────────────────────────
+User.hasMany(ChatMessage, { foreignKey: 'senderId', as: 'sentMessages', onDelete: 'CASCADE' });
+ChatMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
+
+module.exports = { User, Lawyer, LawyerAvailability, Booking, Session, Review, Notification, ChatMessage };

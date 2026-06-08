@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "95303049933",
+    "project_id": "wakeell",
+    "storage_bucket": "wakeell.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95303049933:android:1fa86c6fa2d10b7c21bf84",
+        "android_client_info": {
+          "package_name": "com.wakeell.wakeell"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcuXPTyo2S-B7JK8mypKDU5iSrY9kog6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

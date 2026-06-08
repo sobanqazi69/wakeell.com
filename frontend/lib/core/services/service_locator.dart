@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../network/api_client.dart';
+import '../network/socket_service.dart';
 import 'token_service.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/admin/data/repositories/admin_repository.dart';
@@ -7,12 +8,15 @@ import '../../features/lawyer/data/repositories/lawyer_repository.dart';
 import '../../features/booking/data/repositories/booking_repository.dart';
 import '../../features/session/data/repositories/session_repository.dart';
 import '../../features/notifications/data/repositories/notification_repository.dart';
+import '../../features/review/data/repositories/review_repository.dart';
+import '../../features/chat/data/repositories/chat_repository.dart';
 
 final getIt = GetIt.instance;
 
 void setupLocator() {
   getIt.registerLazySingleton<TokenService>(() => TokenService());
   getIt.registerLazySingleton<ApiClient>(() => ApiClient(getIt<TokenService>()));
+  getIt.registerLazySingleton<SocketService>(() => SocketService());
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepository(getIt<ApiClient>(), getIt<TokenService>()),
   );
@@ -30,5 +34,11 @@ void setupLocator() {
   );
   getIt.registerLazySingleton<NotificationRepository>(
     () => NotificationRepository(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepository(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<ChatRepository>(
+    () => ChatRepository(getIt<ApiClient>()),
   );
 }

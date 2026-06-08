@@ -14,6 +14,14 @@ class SessionRepository {
 
   const SessionRepository(this._api);
 
+  Future<void> endSession(int bookingId) async {
+    try {
+      await _api.patch('/sessions/$bookingId/end', data: {});
+    } catch (e) {
+      DebugLogger.error(_tag, 'endSession: $e');
+    }
+  }
+
   Future<SessionTokenModel> joinToken(int bookingId) async {
     try {
       final res = await _api.post('/sessions/$bookingId/token');

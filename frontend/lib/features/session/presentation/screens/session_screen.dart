@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../../config/routes/app_routes.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../cubits/session_cubit.dart';
 import '../cubits/session_state.dart';
@@ -12,12 +13,14 @@ class SessionScreen extends StatefulWidget {
   final int bookingId;
   final String otherPartyName;
   final String sessionType; // 'video' | 'audio' | 'text'
+  final bool isClient;
 
   const SessionScreen({
     super.key,
     required this.bookingId,
     required this.otherPartyName,
     required this.sessionType,
+    required this.isClient,
   });
 
   @override
@@ -78,7 +81,14 @@ class _SessionScreenState extends State<SessionScreen> {
               _listener?.dispose();
               _listener = state.room.createListener()
                 ..on<ParticipantConnectedEvent>((_) => setState(() {}))
-                ..on<ParticipantDisconnectedEvent>((_) => setState(() {}))
+                ..on<ParticipantDisconnectedEvent>((_) {
+                  final s = context.read<SessionCubit>().state;
+                  if (s is SessionConnected && s.room.remoteParticipants.isEmpty) {
+                    context.read<SessionCubit>().leave();
+                  } else {
+                    setState(() {});
+                  }
+                })
                 ..on<TrackSubscribedEvent>((_) => setState(() {}))
                 ..on<TrackUnsubscribedEvent>((_) => setState(() {}))
                 ..on<TrackMutedEvent>((_) => setState(() {}))
@@ -87,8 +97,18 @@ class _SessionScreenState extends State<SessionScreen> {
                   if (mounted) context.read<SessionCubit>().leave();
                 });
             }
-                    if (state is SessionEnded) {
-              Navigator.of(context).pop();
+            if (state is SessionEnded) {
+              if (widget.isClient) {
+                Navigator.of(context).pushReplacementNamed(
+                  AppRoutes.review,
+                  arguments: {
+                    'bookingId':  state.bookingId,
+                    'lawyerName': widget.otherPartyName,
+                  },
+                );
+              } else {
+                Navigator.of(context).pop();
+              }
             }
           },
           builder: (context, state) {

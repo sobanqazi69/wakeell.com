@@ -96,6 +96,29 @@ exports.joinToken = async (req, res) => {
   }
 };
 
+exports.endSession = async (req, res) => {
+  try {
+    const booking = await Booking.findByPk(req.params.bookingId);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const isParty = booking.clientId === req.user.id || booking.lawyerId === req.user.id;
+    if (!isParty) return res.status(403).json({ message: 'Access denied' });
+
+    if (booking.status !== 'completed') {
+      await booking.update({ status: 'completed', endedAt: new Date() });
+      const session = await Session.findOne({ where: { bookingId: booking.id } });
+      if (session && session.status !== 'ended') {
+        await session.update({ status: 'ended', endedAt: new Date() });
+      }
+    }
+
+    return res.json({ message: 'Session ended' });
+  } catch (err) {
+    console.error('[session.endSession]', err);
+    return res.status(500).json({ message: 'Failed to end session' });
+  }
+};
+
 exports.writeAdviceSummary = async (req, res) => {
   try {
     const { adviceSummary } = req.body;

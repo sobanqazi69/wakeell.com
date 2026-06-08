@@ -10,7 +10,7 @@ function getFirebaseAdmin() {
   let serviceAccount;
 
   // 1. Try file path (most reliable — no shell encoding issues)
-  const filePath = path.join(__dirname, '../../../firebase-service-account.json');
+  const filePath = path.join(__dirname, '../../firebase-service-account.json');
   if (fs.existsSync(filePath)) {
     try {
       serviceAccount = JSON.parse(fs.readFileSync(filePath, 'utf8'));

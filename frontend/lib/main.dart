@@ -7,8 +7,10 @@ import 'config/theme/app_theme.dart';
 import 'config/routes/app_routes.dart';
 import 'core/services/service_locator.dart';
 import 'core/services/push_notification_service.dart';
+import 'core/network/socket_service.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/presentation/cubits/auth_cubit.dart';
+import 'features/auth/presentation/cubits/auth_state.dart';
 import 'features/admin/data/repositories/admin_repository.dart';
 import 'features/admin/presentation/cubits/admin_cubit.dart';
 import 'features/lawyer/data/repositories/lawyer_repository.dart';
@@ -38,6 +40,12 @@ import 'features/session/presentation/screens/session_screen.dart';
 import 'features/notifications/data/repositories/notification_repository.dart';
 import 'features/notifications/presentation/cubits/notifications_cubit.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
+import 'features/review/data/repositories/review_repository.dart';
+import 'features/review/presentation/cubits/review_cubit.dart';
+import 'features/review/presentation/screens/review_screen.dart';
+import 'features/chat/data/repositories/chat_repository.dart';
+import 'features/chat/presentation/cubits/chat_cubit.dart';
+import 'features/chat/presentation/screens/chat_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -109,6 +117,32 @@ class WakeellApp extends StatelessWidget {
           ),
           AppRoutes.lawyerNotifications: (_) => const NotificationsScreen(),
           AppRoutes.notifications:       (_) => const NotificationsScreen(),
+          AppRoutes.review: (ctx) {
+            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            return BlocProvider(
+              create: (_) => ReviewCubit(getIt<ReviewRepository>()),
+              child: ReviewScreen(
+                bookingId:  args['bookingId'] as int,
+                lawyerName: args['lawyerName'] as String? ?? 'Lawyer',
+              ),
+            );
+          },
+          AppRoutes.chat: (ctx) {
+            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            final authState = ctx.read<AuthCubit>().state;
+            final userId = authState is AuthAuthenticated ? authState.user.id : 0;
+            return BlocProvider(
+              create: (_) => ChatCubit(
+                repo:          getIt<ChatRepository>(),
+                socket:        getIt<SocketService>(),
+                bookingId:     args['bookingId'] as int,
+                currentUserId: userId,
+              ),
+              child: ChatScreen(
+                otherPartyName: args['otherPartyName'] as String? ?? 'Consultant',
+              ),
+            );
+          },
           AppRoutes.booking: (_) => BlocProvider(
             create: (_) => ClientBookingCubit(getIt<BookingRepository>(), getIt<LawyerRepository>()),
             child: const BookingScreen(),
@@ -125,6 +159,7 @@ class WakeellApp extends StatelessWidget {
                 bookingId:      args['bookingId'] as int,
                 otherPartyName: args['otherPartyName'] as String,
                 sessionType:    args['sessionType'] as String? ?? 'video',
+                isClient:       args['isClient'] as bool? ?? false,
               ),
             );
           },

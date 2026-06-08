@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/socket_service.dart';
 import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/token_service.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -29,6 +31,7 @@ class AuthCubit extends Cubit<AuthState> {
         currentUser = user;
         emit(AuthAuthenticated(user));
         PushNotificationService.init(getIt<ApiClient>());
+      _connectSocket();
       } else {
         emit(const AuthUnauthenticated());
       }
@@ -49,6 +52,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       // Initialize push notifications now that we have a valid auth token
       PushNotificationService.init(getIt<ApiClient>());
+      _connectSocket();
     } on AuthException catch (e) {
       DebugLogger.error(_tag, 'login AuthException: ${e.message}');
       if (!isClosed) emit(AuthError(e.message));
@@ -82,6 +86,7 @@ class AuthCubit extends Cubit<AuthState> {
       if (!isClosed) emit(AuthAuthenticated(user));
 
       PushNotificationService.init(getIt<ApiClient>());
+      _connectSocket();
     } on AuthException catch (e) {
       DebugLogger.error(_tag, 'registerClient AuthException: ${e.message}');
       if (!isClosed) emit(AuthError(e.message));
@@ -138,5 +143,16 @@ class AuthCubit extends Cubit<AuthState> {
   void updateUser(UserModel user) {
     currentUser = user;
     if (!isClosed) emit(AuthAuthenticated(user));
+  }
+
+  Future<void> _connectSocket() async {
+    try {
+      final token = await getIt<TokenService>().getToken();
+      if (token != null) {
+        getIt<SocketService>().connect(token);
+      }
+    } catch (e) {
+      DebugLogger.error(_tag, '_connectSocket: $e');
+    }
   }
 }

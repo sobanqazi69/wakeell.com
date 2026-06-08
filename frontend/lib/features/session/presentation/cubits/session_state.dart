@@ -52,5 +52,8 @@ class SessionFailed extends SessionState {
 }
 
 class SessionEnded extends SessionState {
-  const SessionEnded();
+  final int bookingId;
+  const SessionEnded({required this.bookingId});
+  @override
+  List<Object?> get props => [bookingId];
 }

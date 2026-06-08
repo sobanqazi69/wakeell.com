@@ -4,6 +4,7 @@ const { protect } = require('../middleware/auth');
 
 router.use(protect);
 router.post('/', ctrl.createReview);
+router.get('/booking/:bookingId', ctrl.getBookingReview);
 router.get('/lawyer/:lawyerId', ctrl.getLawyerReviews);
 
 module.exports = router;

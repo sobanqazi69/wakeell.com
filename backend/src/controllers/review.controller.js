@@ -1,5 +1,6 @@
 const { Review, Booking, Lawyer, User } = require('../models');
 const sequelize = require('../config/db');
+const notif = require('../services/notification.service');
 
 exports.createReview = async (req, res) => {
   try {
@@ -50,10 +51,30 @@ exports.createReview = async (req, res) => {
       { where: { userId: booking.lawyerId } }
     );
 
+    // Notify the lawyer
+    const clientName = req.user.name || 'A client';
+    notif.send(
+      booking.lawyerId,
+      'New Review',
+      `${clientName} gave you a ${rating}-star review`,
+      'booking_accepted',
+      { bookingId },
+    ).catch(() => {});
+
     return res.status(201).json({ review });
   } catch (err) {
     console.error('[review.createReview]', err);
     return res.status(500).json({ message: 'Failed to submit review' });
+  }
+};
+
+exports.getBookingReview = async (req, res) => {
+  try {
+    const review = await Review.findOne({ where: { bookingId: req.params.bookingId } });
+    return res.json({ review: review || null });
+  } catch (err) {
+    console.error('[review.getBookingReview]', err);
+    return res.status(500).json({ message: 'Failed to fetch review' });
   }
 };
 

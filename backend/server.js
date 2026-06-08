@@ -20,6 +20,7 @@ const reviewRoutes       = require('./src/routes/review.routes');
 const adminRoutes        = require('./src/routes/admin.routes');
 const citiesRoutes       = require('./src/routes/cities.routes');
 const notificationRoutes = require('./src/routes/notification.routes');
+const chatRoutes         = require('./src/routes/chat.routes');
 
 const socketHandler = require('./src/socket');
 
@@ -43,6 +44,7 @@ app.use('/api/reviews',       reviewRoutes);
 app.use('/api/admin',         adminRoutes);
 app.use('/api/cities',        citiesRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/chats',         chatRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', db: 'mysql' }));
 

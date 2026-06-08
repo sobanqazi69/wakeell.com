@@ -1,0 +1,65 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/network/socket_service.dart';
+import '../../../../core/utils/debug_logger.dart';
+import '../../data/models/chat_message_model.dart';
+import '../../data/repositories/chat_repository.dart';
+import 'chat_state.dart';
+
+class ChatCubit extends Cubit<ChatState> {
+  static const _tag = 'ChatCubit';
+
+  final ChatRepository _repo;
+  final SocketService _socket;
+  final int bookingId;
+  final int currentUserId;
+
+  ChatCubit({
+    required ChatRepository repo,
+    required SocketService socket,
+    required this.bookingId,
+    required this.currentUserId,
+  })  : _repo = repo,
+        _socket = socket,
+        super(const ChatInitial());
+
+  Future<void> init() async {
+    try {
+      if (!isClosed) emit(const ChatLoading());
+      final history = await _repo.getHistory(bookingId);
+      if (!isClosed) emit(ChatLoaded(history));
+
+      _socket.emit('chat:join', {'bookingId': bookingId});
+
+      _socket.on('chat:message', (data) {
+        try {
+          final msg = ChatMessageModel.fromJson(
+            Map<String, dynamic>.from(data as Map),
+          );
+          final s = state;
+          if (s is ChatLoaded && !isClosed) {
+            emit(s.withMessage(msg));
+          }
+        } catch (e) {
+          DebugLogger.error(_tag, 'chat:message parse error: $e');
+        }
+      });
+    } catch (e) {
+      DebugLogger.error(_tag, 'init: $e');
+      if (!isClosed) emit(ChatError(e.toString()));
+    }
+  }
+
+  void sendMessage(String text) {
+    if (text.trim().isEmpty) return;
+    _socket.emit('chat:send', {
+      'bookingId': bookingId,
+      'message': text.trim(),
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _socket.off('chat:message');
+    return super.close();
+  }
+}

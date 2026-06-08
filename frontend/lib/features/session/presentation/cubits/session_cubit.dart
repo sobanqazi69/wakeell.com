@@ -12,18 +12,19 @@ class SessionCubit extends Cubit<SessionState> {
   final SessionRepository _repo;
   Room? _room;
   Timer? _timer;
+  int? _bookingId;
+  bool _hasLeft = false;
 
   SessionCubit(this._repo) : super(const SessionInitial());
 
   Future<void> join(int bookingId) async {
+    _bookingId = bookingId;
     try {
       if (!isClosed) emit(const SessionConnecting());
 
-      // 1. Fetch LiveKit token from backend
       final tokenData = await _repo.joinToken(bookingId);
       DebugLogger.log(_tag, 'token fetched for room ${tokenData.roomId}');
 
-      // 2. Create and connect room
       _room = Room();
       await _room!.connect(
         tokenData.wsUrl,
@@ -31,14 +32,11 @@ class SessionCubit extends Cubit<SessionState> {
         roomOptions: const RoomOptions(
           adaptiveStream: true,
           dynacast: true,
-          defaultVideoPublishOptions: VideoPublishOptions(
-            simulcast: true,
-          ),
+          defaultVideoPublishOptions: VideoPublishOptions(simulcast: true),
         ),
       );
       DebugLogger.log(_tag, 'connected to room ${tokenData.roomId}');
 
-      // 3. Check runtime permissions, then enable tracks independently
       bool isMicEnabled = false;
       bool isCameraEnabled = false;
 
@@ -64,9 +62,6 @@ class SessionCubit extends Cubit<SessionState> {
         }
       }
 
-      DebugLogger.log(_tag, 'tracks: mic=$isMicEnabled camera=$isCameraEnabled');
-
-      // 4. Start elapsed-time ticker
       _startTimer();
 
       if (!isClosed) {
@@ -108,13 +103,18 @@ class SessionCubit extends Cubit<SessionState> {
   }
 
   Future<void> leave() async {
+    if (_hasLeft) return;
+    _hasLeft = true;
     _timer?.cancel();
     try {
       await _room?.disconnect();
     } catch (e) {
       DebugLogger.error(_tag, 'leave: $e');
     }
-    if (!isClosed) emit(const SessionEnded());
+    if (_bookingId != null) {
+      await _repo.endSession(_bookingId!);
+    }
+    if (!isClosed) emit(SessionEnded(bookingId: _bookingId ?? 0));
   }
 
   void _startTimer() {
