@@ -14,15 +14,22 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ message: 'Lawyer is not available for bookings' });
     }
 
-    // Verify slot availability — slots may be a JS array or a raw JSON string
+    // Verify slot availability — slots may be a JS array or a raw JSON string (mysql2 JSON column)
     const avail = await LawyerAvailability.findOne({ where: { lawyerId, date } });
-    if (!avail) return res.status(400).json({ message: 'Time slot not available' });
+    console.log('[booking.createBooking] avail found=%s lawyerId=%s date=%s', !!avail, lawyerId, date);
+    if (!avail) return res.status(400).json({ message: 'No availability set for this date' });
+
     let slotsArr = avail.slots;
+    console.log('[booking.createBooking] slots raw type=%s value=%j', typeof slotsArr, slotsArr);
     if (!Array.isArray(slotsArr)) {
-      try { slotsArr = JSON.parse(slotsArr); } catch { slotsArr = []; }
+      try {
+        const parsed = JSON.parse(slotsArr);
+        slotsArr = Array.isArray(parsed) ? parsed : [];
+      } catch { slotsArr = []; }
     }
+    console.log('[booking.createBooking] slotsArr=%j timeSlot=%s includes=%s', slotsArr, timeSlot, slotsArr.includes(timeSlot));
     if (!slotsArr.includes(timeSlot)) {
-      return res.status(400).json({ message: 'Time slot not available' });
+      return res.status(400).json({ message: `Slot ${timeSlot} is not available. Available: ${slotsArr.join(', ')}` });
     }
 
     const booking = await Booking.create({
@@ -95,8 +102,8 @@ exports.respondToBooking = async (req, res) => {
   try {
     const { status } = req.body;
 
-    if (!['confirmed', 'cancelled'].includes(status)) {
-      return res.status(400).json({ message: 'status must be confirmed or cancelled' });
+    if (!['accepted', 'declined'].includes(status)) {
+      return res.status(400).json({ message: 'status must be accepted or declined' });
     }
 
     const booking = await Booking.findByPk(req.params.id);
