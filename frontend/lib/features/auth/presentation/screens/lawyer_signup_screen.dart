@@ -228,7 +228,7 @@ class _LawyerSignupScreenState extends State<LawyerSignupScreen> {
             GestureDetector(
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.lawyerLogin, (_) => false);
               },
               child: Container(
                 width: double.infinity, height: 48,
