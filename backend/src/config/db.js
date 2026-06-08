@@ -11,6 +11,17 @@ const sequelize = new Sequelize(
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
     define: { underscored: true, timestamps: true },
+    dialectOptions: {
+      // mysql2 returns JSON columns as raw strings — parse them at driver level
+      typeCast(field, next) {
+        if (field.type === 'JSON') {
+          const raw = field.string();
+          if (raw === null || raw === undefined) return null;
+          try { return JSON.parse(raw); } catch { return raw; }
+        }
+        return next();
+      },
+    },
   }
 );
 
