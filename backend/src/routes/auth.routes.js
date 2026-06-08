@@ -8,6 +8,7 @@ router.post('/register/lawyer', upload.single('avatar'), ctrl.registerLawyer);
 router.post('/login', ctrl.login);
 router.get('/me', protect, ctrl.getMe);
 router.patch('/me', protect, ctrl.updateMe);
+router.patch('/me/avatar', protect, upload.single('avatar'), ctrl.uploadMyAvatar);
 router.patch('/fcm-token', protect, ctrl.updateFcmToken);
 
 module.exports = router;

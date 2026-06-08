@@ -72,6 +72,18 @@ class BookingRepository {
     }
   }
 
+  Future<void> cancelBooking(int bookingId) async {
+    try {
+      await _api.patch('/bookings/$bookingId/cancel', data: {});
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'cancelBooking: ${e.message}');
+      throw BookingException(_msg(e) ?? 'Failed to cancel booking');
+    } catch (e) {
+      DebugLogger.error(_tag, 'cancelBooking unexpected: $e');
+      throw const BookingException('Failed to cancel booking');
+    }
+  }
+
   String? _msg(DioException e) {
     try { final d = e.response?.data; if (d is Map) return d['message'] as String?; } catch (_) {}
     return null;

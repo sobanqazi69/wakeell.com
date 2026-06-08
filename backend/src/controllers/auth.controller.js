@@ -127,6 +127,20 @@ exports.updateMe = async (req, res) => {
   }
 };
 
+exports.uploadMyAvatar = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const avatarPath = `/uploads/avatars/${req.file.filename}`;
+    await user.update({ avatar: avatarPath });
+    return res.json({ user });
+  } catch (err) {
+    console.error('[auth.uploadMyAvatar]', err);
+    return res.status(500).json({ message: 'Failed to upload avatar' });
+  }
+};
+
 exports.updateFcmToken = async (req, res) => {
   try {
     const { fcmToken } = req.body;

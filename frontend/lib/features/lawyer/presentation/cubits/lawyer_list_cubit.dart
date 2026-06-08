@@ -13,6 +13,8 @@ class LawyerListCubit extends Cubit<LawyerListState> {
   String _category = 'All';
   String _sort = 'all';
   String _nearMeCity = '';
+  double _minRating = 0;
+  double _maxFee = 0;
   List<LawyerModel> _fullResults = [];
   Timer? _debounce;
 
@@ -40,6 +42,12 @@ class LawyerListCubit extends Cubit<LawyerListState> {
   void onNearMeFilter(String city) {
     _nearMeCity = city;
     _sort = 'near_me';
+    _applySort();
+  }
+
+  void applyFilters({required double minRating, required double maxFee}) {
+    _minRating = minRating;
+    _maxFee = maxFee;
     _applySort();
   }
 
@@ -82,12 +90,21 @@ class LawyerListCubit extends Cubit<LawyerListState> {
         }
     }
 
+    if (_minRating > 0) {
+      result = result.where((l) => l.rating >= _minRating).toList();
+    }
+    if (_maxFee > 0) {
+      result = result.where((l) => l.hourlyRate <= _maxFee).toList();
+    }
+
     if (!isClosed) {
       emit(LawyerListLoaded(
         lawyers: result,
         search: _search,
         category: _category,
         sort: _sort,
+        minRating: _minRating,
+        maxFee: _maxFee,
       ));
     }
   }

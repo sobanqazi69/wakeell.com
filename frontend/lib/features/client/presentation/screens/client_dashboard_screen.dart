@@ -366,18 +366,26 @@ class _ClientDrawer extends StatelessWidget {
             ),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 60, height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
-              ),
-              child: Center(child: Text(
-                _initials(user?.name ?? ''),
-                style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
-              )),
-            ),
+            Builder(builder: (ctx) {
+              final avatarUrl = _resolveAvatar(user?.avatar);
+              return Container(
+                width: 64, height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: avatarUrl.isNotEmpty
+                    ? Image.network(avatarUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(child: Text(
+                          _initials(user?.name ?? ''),
+                          style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white))))
+                    : Center(child: Text(
+                        _initials(user?.name ?? ''),
+                        style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white))),
+              );
+            }),
             const SizedBox(height: 12),
             Text(user?.name ?? '', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
             const SizedBox(height: 2),
@@ -397,7 +405,7 @@ class _ClientDrawer extends StatelessWidget {
         _DrawerTile(icon: Icons.calendar_month_outlined, label: 'My Bookings',
           onTap: () { Navigator.pop(context); Navigator.pushNamed(context, AppRoutes.clientBookings); }),
         _DrawerTile(icon: Icons.person_outline_rounded, label: 'My Profile',
-          onTap: () { Navigator.pop(context); }),
+          onTap: () { Navigator.pop(context); Navigator.pushNamed(context, AppRoutes.clientProfile); }),
         _DrawerTile(icon: Icons.notifications_outlined, label: 'Notifications',
           onTap: () { Navigator.pop(context); }),
         _DrawerTile(icon: Icons.help_outline_rounded, label: 'Help & Support',

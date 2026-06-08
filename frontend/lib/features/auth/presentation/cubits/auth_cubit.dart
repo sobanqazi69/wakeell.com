@@ -145,6 +145,19 @@ class AuthCubit extends Cubit<AuthState> {
     if (!isClosed) emit(AuthAuthenticated(user));
   }
 
+  Future<void> uploadAvatar(XFile photo) async {
+    try {
+      final user = await _repo.uploadAvatar(photo);
+      currentUser = user;
+      if (!isClosed) emit(AuthAuthenticated(user));
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      DebugLogger.error(_tag, 'uploadAvatar unexpected: $e');
+      rethrow;
+    }
+  }
+
   Future<void> _connectSocket() async {
     try {
       final token = await getIt<TokenService>().getToken();

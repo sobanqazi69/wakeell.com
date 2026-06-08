@@ -11,10 +11,13 @@ const REMINDERS = [
   { offsetMin: -5,  flag: 'reminderSent5',  label: '5 minutes' },
 ];
 
+const PKT_OFFSET_MS = 5 * 60 * 60 * 1000; // UTC+5
+
 function _sessionStart(date, timeSlot) {
   const [y, mo, d] = date.split('-').map(Number);
   const [h, mi]    = timeSlot.split(':').map(Number);
-  return new Date(y, mo - 1, d, h, mi, 0);
+  // Times stored as PKT — convert to UTC for accurate server-side scheduling
+  return new Date(Date.UTC(y, mo - 1, d, h, mi, 0) - PKT_OFFSET_MS);
 }
 
 function scheduleReminders(booking) {

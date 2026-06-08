@@ -192,6 +192,75 @@ class _BookingCard extends StatelessWidget {
             ],
           ]),
         ),
+        // Cancel button for pending bookings
+        if (booking.status == 'pending') ...[
+          const Divider(height: 1, color: AppColors.divider),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: GestureDetector(
+              onTap: () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: AppColors.surface,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    title: Text('Cancel Booking',
+                        style: GoogleFonts.outfit(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary)),
+                    content: Text(
+                        'Are you sure you want to cancel this booking?',
+                        style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            color: AppColors.textSecondary)),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: Text('No',
+                              style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary))),
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text('Cancel Booking',
+                              style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.error))),
+                    ],
+                  ),
+                );
+                if (ok == true && context.mounted) {
+                  context
+                      .read<ClientBookingsCubit>()
+                      .cancelBooking(booking.id);
+                }
+              },
+              child: Container(
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cancel_outlined,
+                          size: 15, color: AppColors.error),
+                      const SizedBox(width: 6),
+                      Text('Cancel Booking',
+                          style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.error)),
+                    ]),
+              ),
+            ),
+          ),
+        ],
         if (booking.canJoin) ...[
           const Divider(height: 1, color: AppColors.divider),
           Padding(

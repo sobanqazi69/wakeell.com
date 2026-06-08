@@ -16,16 +16,20 @@ class LawyerListLoaded extends LawyerListState {
   final String search;
   final String category;
   final String sort; // 'all' | 'top_rated' | 'low_fee' | 'near_me'
+  final double minRating; // 0 = no filter
+  final double maxFee;    // 0 = no filter
 
   const LawyerListLoaded({
     required this.lawyers,
     required this.search,
     required this.category,
     this.sort = 'all',
+    this.minRating = 0,
+    this.maxFee = 0,
   });
 
   @override
-  List<Object?> get props => [lawyers, search, category, sort];
+  List<Object?> get props => [lawyers, search, category, sort, minRating, maxFee];
 }
 
 class LawyerListError extends LawyerListState {

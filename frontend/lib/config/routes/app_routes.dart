@@ -21,4 +21,6 @@ class AppRoutes {
   static const String adminDashboard = '/admin';
   static const String review = '/review';
   static const String chat   = '/chat';
+  static const String clientProfile   = '/client/profile';
+  static const String adviceSummary   = '/advice-summary';
 }

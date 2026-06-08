@@ -167,15 +167,30 @@ class _BookingCard extends StatelessWidget {
         ],
         if (booking.status == 'completed') ...[
           const SizedBox(height: 12),
-          Builder(builder: (ctx) => _Btn(
-            label: 'Chat with Client',
-            color: AppColors.cyan,
-            filled: false,
-            onTap: () => Navigator.pushNamed(ctx, AppRoutes.chat, arguments: {
-              'bookingId':      booking.id,
-              'otherPartyName': booking.clientName ?? 'Client',
-            }),
-          )),
+          Row(children: [
+            Expanded(
+              child: Builder(builder: (ctx) => _Btn(
+                label: 'Chat',
+                color: AppColors.cyan,
+                filled: false,
+                onTap: () => Navigator.pushNamed(ctx, AppRoutes.chat, arguments: {
+                  'bookingId':      booking.id,
+                  'otherPartyName': booking.clientName ?? 'Client',
+                }),
+              )),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Builder(builder: (ctx) => _Btn(
+                label: 'Summary',
+                color: AppColors.navy,
+                onTap: () => Navigator.pushNamed(ctx, AppRoutes.adviceSummary, arguments: {
+                  'bookingId':  booking.id,
+                  'clientName': booking.clientName ?? 'Client',
+                }),
+              )),
+            ),
+          ]),
         ],
       ]),
     );

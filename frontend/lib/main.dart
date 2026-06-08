@@ -46,6 +46,8 @@ import 'features/review/presentation/screens/review_screen.dart';
 import 'features/chat/data/repositories/chat_repository.dart';
 import 'features/chat/presentation/cubits/chat_cubit.dart';
 import 'features/chat/presentation/screens/chat_screen.dart';
+import 'features/client/presentation/screens/client_profile_screen.dart';
+import 'features/session/presentation/screens/advice_summary_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -153,6 +155,15 @@ class WakeellApp extends StatelessWidget {
                 otherPartyName:
                     args['otherPartyName'] as String? ?? 'Consultant',
               ),
+            );
+          },
+          AppRoutes.clientProfile: (_) => const ClientProfileScreen(),
+          AppRoutes.adviceSummary: (ctx) {
+            final args =
+                ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            return AdviceSummaryScreen(
+              bookingId: args['bookingId'] as int,
+              clientName: args['clientName'] as String? ?? 'Client',
             );
           },
           AppRoutes.booking: (_) => BlocProvider(

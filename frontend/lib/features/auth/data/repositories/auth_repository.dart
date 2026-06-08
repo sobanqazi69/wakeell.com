@@ -184,6 +184,25 @@ class AuthRepository {
     }
   }
 
+  Future<UserModel> uploadAvatar(XFile photo) async {
+    try {
+      final formData = FormData.fromMap({
+        'avatar': await MultipartFile.fromFile(photo.path, filename: photo.name),
+      });
+      final res = await _api.patch('/auth/me/avatar', data: formData);
+      final data = res.data as Map<String, dynamic>;
+      final userJson = handleNullableMapKey(data, 'user') ?? data;
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'uploadAvatar: ${e.message}');
+      throw AuthException(_extractMessage(e) ?? 'Failed to upload avatar');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'uploadAvatar unexpected: $e');
+      throw const AuthException('Failed to upload avatar');
+    }
+  }
+
   Future<void> logout() async {
     await _token.clearToken();
     DebugLogger.log(_tag, 'Logged out');

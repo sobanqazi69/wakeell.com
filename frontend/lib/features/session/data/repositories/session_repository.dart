@@ -22,6 +22,21 @@ class SessionRepository {
     }
   }
 
+  Future<void> writeSummary(int bookingId, String summary) async {
+    try {
+      await _api.patch('/sessions/$bookingId/summary',
+          data: {'adviceSummary': summary});
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'writeSummary: ${e.message}');
+      throw SessionException(
+          (e.response?.data is Map ? e.response?.data['message'] : null) ??
+              'Failed to save summary');
+    } catch (e) {
+      DebugLogger.error(_tag, 'writeSummary unexpected: $e');
+      throw const SessionException('Failed to save summary');
+    }
+  }
+
   Future<SessionTokenModel> joinToken(int bookingId) async {
     try {
       final res = await _api.post('/sessions/$bookingId/token');

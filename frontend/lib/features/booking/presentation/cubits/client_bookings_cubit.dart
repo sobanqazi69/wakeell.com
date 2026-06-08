@@ -32,4 +32,33 @@ class ClientBookingsCubit extends Cubit<ClientBookingsState> {
         : _all.where((b) => b.status == filter).toList();
     if (!isClosed) emit(ClientBookingsLoaded(bookings: filtered, filter: filter));
   }
+
+  Future<void> cancelBooking(int bookingId) async {
+    try {
+      await _repo.cancelBooking(bookingId);
+      _all = _all.map((b) {
+        if (b.id == bookingId) {
+          return BookingModel(
+            id: b.id, clientId: b.clientId, lawyerId: b.lawyerId,
+            date: b.date, timeSlot: b.timeSlot, duration: b.duration,
+            sessionType: b.sessionType, category: b.category,
+            caseBrief: b.caseBrief, status: 'cancelled',
+            clientName: b.clientName, lawyerName: b.lawyerName,
+          );
+        }
+        return b;
+      }).toList();
+
+      final currentState = state;
+      if (currentState is ClientBookingsLoaded && !isClosed) {
+        final filter = currentState.filter;
+        final filtered = filter == 'all'
+            ? _all
+            : _all.where((b) => b.status == filter).toList();
+        emit(ClientBookingsLoaded(bookings: filtered, filter: filter));
+      }
+    } catch (e) {
+      DebugLogger.error(_tag, 'cancelBooking: $e');
+    }
+  }
 }
