@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../config/routes/app_routes.dart';
+import '../../../../core/utils/debug_logger.dart';
 import '../../data/models/lawyer_model.dart';
 import '../cubits/lawyer_list_cubit.dart';
 import '../cubits/lawyer_list_state.dart';
@@ -20,7 +23,9 @@ class LawyersListScreen extends StatefulWidget {
 }
 
 class _LawyersListScreenState extends State<LawyersListScreen> {
+  static const _tag = 'LawyersListScreen';
   final _searchCtrl = TextEditingController();
+  bool _locating = false;
 
   @override
   void initState() {
@@ -32,6 +37,53 @@ class _LawyersListScreenState extends State<LawyersListScreen> {
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleNearMe() async {
+    try {
+      setState(() => _locating = true);
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+        if (mounted) {
+          setState(() => _locating = false);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Location permission denied. Enable in settings.', style: GoogleFonts.outfit(color: Colors.white)),
+            backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating,
+          ));
+        }
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)));
+      final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      final city = placemarks.firstOrNull?.locality ?? placemarks.firstOrNull?.subAdministrativeArea ?? '';
+
+      if (!mounted) return;
+      setState(() => _locating = false);
+
+      if (city.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Could not determine your city', style: GoogleFonts.outfit(color: Colors.white)),
+          backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating,
+        ));
+        return;
+      }
+
+      context.read<LawyerListCubit>().onNearMeFilter(city);
+    } catch (e) {
+      DebugLogger.error(_tag, 'nearMe: $e');
+      if (mounted) {
+        setState(() => _locating = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Could not get your location', style: GoogleFonts.outfit(color: Colors.white)),
+          backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
   }
 
   @override
@@ -145,7 +197,36 @@ class _LawyersListScreenState extends State<LawyersListScreen> {
                 );
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // ── Sort filters ──────────────────────────────────────────────
+            BlocBuilder<LawyerListCubit, LawyerListState>(
+              builder: (context, state) {
+                final activeSort = state is LawyerListLoaded ? state.sort : 'all';
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(children: [
+                    _SortChip(label: '⭐ Top Rated', value: 'top_rated', activeSort: activeSort, onTap: () => context.read<LawyerListCubit>().onSortChanged('top_rated')),
+                    const SizedBox(width: 8),
+                    _SortChip(label: '💰 Low Fee', value: 'low_fee', activeSort: activeSort, onTap: () => context.read<LawyerListCubit>().onSortChanged('low_fee')),
+                    const SizedBox(width: 8),
+                    _SortChip(
+                      label: _locating ? '…' : '📍 Near Me',
+                      value: 'near_me',
+                      activeSort: activeSort,
+                      onTap: _locating ? null : () {
+                        if (activeSort == 'near_me') {
+                          context.read<LawyerListCubit>().onSortChanged('all');
+                        } else {
+                          _handleNearMe();
+                        }
+                      },
+                    ),
+                  ]),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
 
             // ── List ──────────────────────────────────────────────────────
             Expanded(
@@ -324,6 +405,32 @@ class _EmptyView extends StatelessWidget {
           style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary)),
       ]),
     ));
+  }
+}
+
+class _SortChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final String activeSort;
+  final VoidCallback? onTap;
+  const _SortChip({required this.label, required this.value, required this.activeSort, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOn = value == activeSort;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isOn ? AppColors.navy : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isOn ? AppColors.navy : AppColors.fieldBorder),
+        ),
+        child: Text(label, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: isOn ? Colors.white : AppColors.textSecondary)),
+      ),
+    );
   }
 }
 

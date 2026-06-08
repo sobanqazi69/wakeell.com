@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/debug_logger.dart';
+import '../../data/models/lawyer_model.dart';
 import '../../data/repositories/lawyer_repository.dart';
 import 'lawyer_list_state.dart';
 
@@ -10,13 +11,14 @@ class LawyerListCubit extends Cubit<LawyerListState> {
 
   String _search = '';
   String _category = 'All';
+  String _sort = 'all';
+  String _nearMeCity = '';
+  List<LawyerModel> _fullResults = [];
   Timer? _debounce;
 
   LawyerListCubit(this._repo) : super(const LawyerListInitial());
 
-  Future<void> load() async {
-    await _fetch();
-  }
+  Future<void> load() async => _fetch();
 
   void onSearchChanged(String query) {
     _search = query;
@@ -29,6 +31,18 @@ class LawyerListCubit extends Cubit<LawyerListState> {
     _fetch();
   }
 
+  void onSortChanged(String sort) {
+    _sort = sort;
+    if (sort != 'near_me') _nearMeCity = '';
+    _applySort();
+  }
+
+  void onNearMeFilter(String city) {
+    _nearMeCity = city;
+    _sort = 'near_me';
+    _applySort();
+  }
+
   Future<void> refresh() => _fetch();
 
   Future<void> _fetch() async {
@@ -36,20 +50,45 @@ class LawyerListCubit extends Cubit<LawyerListState> {
       if (isClosed) return;
       emit(const LawyerListLoading());
 
-      final lawyers = await _repo.getLawyers(
+      _fullResults = await _repo.getLawyers(
         search:   _search.isEmpty ? null : _search,
         category: _category,
       );
 
-      if (!isClosed) {
-        emit(LawyerListLoaded(lawyers: lawyers, search: _search, category: _category));
-      }
+      _applySort();
     } on LawyerException catch (e) {
       DebugLogger.error(_tag, e.message);
       if (!isClosed) emit(LawyerListError(e.message));
     } catch (e) {
       DebugLogger.error(_tag, 'unexpected: $e');
       if (!isClosed) emit(const LawyerListError('Failed to load lawyers'));
+    }
+  }
+
+  void _applySort() {
+    var result = List<LawyerModel>.from(_fullResults);
+
+    switch (_sort) {
+      case 'top_rated':
+        result.sort((a, b) => b.rating.compareTo(a.rating));
+      case 'low_fee':
+        result.sort((a, b) => a.hourlyRate.compareTo(b.hourlyRate));
+      case 'near_me':
+        if (_nearMeCity.isNotEmpty) {
+          result = result.where((l) {
+            final loc = l.location?.toLowerCase() ?? '';
+            return loc.contains(_nearMeCity.toLowerCase());
+          }).toList();
+        }
+    }
+
+    if (!isClosed) {
+      emit(LawyerListLoaded(
+        lawyers: result,
+        search: _search,
+        category: _category,
+        sort: _sort,
+      ));
     }
   }
 

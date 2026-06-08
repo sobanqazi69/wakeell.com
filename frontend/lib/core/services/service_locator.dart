@@ -3,6 +3,8 @@ import '../network/api_client.dart';
 import 'token_service.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/admin/data/repositories/admin_repository.dart';
+import '../../features/lawyer/data/repositories/lawyer_repository.dart';
+import '../../features/booking/data/repositories/booking_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -14,5 +16,11 @@ void setupLocator() {
   );
   getIt.registerLazySingleton<AdminRepository>(
     () => AdminRepository(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<LawyerRepository>(
+    () => LawyerRepository(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<BookingRepository>(
+    () => BookingRepository(getIt<ApiClient>()),
   );
 }

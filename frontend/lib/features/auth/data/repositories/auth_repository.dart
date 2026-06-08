@@ -150,6 +150,36 @@ class AuthRepository {
     }
   }
 
+  Future<UserModel> updateMe({
+    String? name,
+    String? phone,
+    String? location,
+    String? jurisdiction,
+  }) async {
+    try {
+      final res = await _api.patch('/auth/me', data: {
+        // ignore: use_null_aware_elements
+        if (name != null) 'name': name.trim(),
+        // ignore: use_null_aware_elements
+        if (phone != null) 'phone': phone.trim(),
+        // ignore: use_null_aware_elements
+        if (location != null) 'location': location,
+        // ignore: use_null_aware_elements
+        if (jurisdiction != null) 'jurisdiction': jurisdiction,
+      });
+      final data = res.data as Map<String, dynamic>;
+      final userJson = handleNullableMapKey(data, 'user') ?? data;
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'updateMe: ${e.message}');
+      throw AuthException(_extractMessage(e) ?? 'Failed to update profile');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'updateMe unexpected: $e');
+      throw const AuthException('Failed to update profile');
+    }
+  }
+
   Future<void> logout() async {
     await _token.clearToken();
     DebugLogger.log(_tag, 'Logged out');

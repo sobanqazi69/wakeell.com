@@ -40,6 +40,20 @@ exports.getLawyers = async (req, res) => {
   }
 };
 
+exports.getMyProfile = async (req, res) => {
+  try {
+    const profile = await Lawyer.findOne({
+      where: { userId: req.user.id },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'avatar', 'location', 'jurisdiction', 'phone'] }],
+    });
+    if (!profile) return res.status(404).json({ message: 'Lawyer profile not found' });
+    return res.json({ profile });
+  } catch (err) {
+    console.error('[lawyer.getMyProfile]', err);
+    return res.status(500).json({ message: 'Failed to fetch profile' });
+  }
+};
+
 exports.getLawyerById = async (req, res) => {
   try {
     const profile = await Lawyer.findByPk(req.params.id, {

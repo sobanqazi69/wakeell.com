@@ -4,7 +4,7 @@ import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../../auth/presentation/cubits/auth_state.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../../client/presentation/screens/client_dashboard_screen.dart';
-import '../../../lawyer/presentation/screens/lawyer_dashboard_screen.dart';
+import '../../../lawyer/presentation/screens/lawyer_main_screen.dart';
 
 /// Role-based router — the single `/home` route that delegates
 /// to the correct dashboard based on user.role.
@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
           case 'admin':
             return const AdminDashboardScreen();
           case 'lawyer':
-            return const LawyerDashboardScreen();
+            return const LawyerMainScreen();
           default:
             return const ClientDashboardScreen();
         }

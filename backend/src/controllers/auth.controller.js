@@ -105,6 +105,26 @@ exports.getMe = async (req, res) => {
   }
 };
 
+exports.updateMe = async (req, res) => {
+  try {
+    const { name, phone, location, jurisdiction } = req.body;
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (phone !== undefined) updates.phone = phone;
+    if (location !== undefined) updates.location = location;
+    if (jurisdiction !== undefined) updates.jurisdiction = jurisdiction;
+
+    await user.update(updates);
+    return res.json({ user });
+  } catch (err) {
+    console.error('[auth.updateMe]', err);
+    return res.status(500).json({ message: 'Failed to update profile' });
+  }
+};
+
 exports.updateFcmToken = async (req, res) => {
   try {
     const { fcmToken } = req.body;

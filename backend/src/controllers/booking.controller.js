@@ -90,8 +90,8 @@ exports.respondToBooking = async (req, res) => {
   try {
     const { status } = req.body;
 
-    if (!['accepted', 'declined'].includes(status)) {
-      return res.status(400).json({ message: 'status must be accepted or declined' });
+    if (!['confirmed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'status must be confirmed or cancelled' });
     }
 
     const booking = await Booking.findByPk(req.params.id);

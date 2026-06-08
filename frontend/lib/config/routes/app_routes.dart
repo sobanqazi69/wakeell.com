@@ -9,8 +9,12 @@ class AppRoutes {
   static const String home = '/home';
   static const String lawyers = '/lawyers';
   static const String lawyerDetail = '/lawyers/detail';
+  static const String lawyerProfileEdit    = '/lawyer/profile/edit';
+  static const String lawyerAvailability   = '/lawyer/availability';
+  static const String lawyerNotifications  = '/lawyer/notifications';
   static const String booking = '/booking';
   static const String bookings = '/bookings';
+  static const String clientBookings = '/client/bookings';
   static const String session = '/session';
   static const String profile = '/profile';
   static const String adminDashboard = '/admin';

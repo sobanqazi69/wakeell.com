@@ -29,6 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
         if (state is AuthAuthenticated) {
           Navigator.pushReplacementNamed(context, AppRoutes.home);
         }
+        // AuthUnauthenticated: BlocBuilder already shows CTAs — no action needed
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
@@ -66,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
-                    if (state is AuthLoading) {
+                    if (state is AuthLoading || state is AuthInitial) {
                       return const CircularProgressIndicator(
                         color: AppColors.navy,
                         strokeWidth: 2,
