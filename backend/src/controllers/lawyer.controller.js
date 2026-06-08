@@ -112,8 +112,9 @@ exports.getAvailability = async (req, res) => {
     const profile = await Lawyer.findByPk(req.params.id, { attributes: ['id'] });
     if (!profile) return res.status(404).json({ message: 'Lawyer not found' });
 
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const availability = await LawyerAvailability.findAll({
-      where: { lawyerId: profile.id },
+      where: { lawyerId: profile.id, date: { [Op.gte]: today } },
       order: [['date', 'ASC']],
     });
     return res.json({ availability });

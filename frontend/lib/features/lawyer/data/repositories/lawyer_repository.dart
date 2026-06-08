@@ -105,12 +105,9 @@ class LawyerRepository {
       final data = res.data as Map<String, dynamic>;
       final list = handleNullableListKey(data, 'availability') ?? [];
       final Map<String, List<String>> result = {};
-      final now = DateTime.now();
-      // today as YYYY-MM-DD for string comparison
-      final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       for (final item in list.whereType<Map<String, dynamic>>()) {
         final date = handleNullableStringKey(item, 'date') ?? '';
-        if (date.isEmpty || date.compareTo(today) < 0) continue;
+        if (date.isEmpty) continue;
         // Backend stores slots as an array e.g. ["09:00", "10:00"]
         final slots = handleNullableListKey(item, 'slots') ?? [];
         final slotList = slots.whereType<String>().toList()..sort();
