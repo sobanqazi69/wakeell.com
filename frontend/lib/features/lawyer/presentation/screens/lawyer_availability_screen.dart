@@ -5,13 +5,11 @@ import '../../../../config/theme/app_colors.dart';
 import '../cubits/lawyer_availability_cubit.dart';
 import '../cubits/lawyer_availability_state.dart';
 
-const _kDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const _kFullDays = [
-  'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-  'Friday', 'Saturday', 'Sunday'
-];
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-// 48 half-hour slots
+const _kDays     = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const _kFullDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 const _kSlots = [
   '00:00', '00:30', '01:00', '01:30', '02:00', '02:30',
   '03:00', '03:30', '04:00', '04:30', '05:00', '05:30',
@@ -23,13 +21,50 @@ const _kSlots = [
   '21:00', '21:30', '22:00', '22:30', '23:00', '23:30',
 ];
 
-// Grouped sections: [label, icon, startIndex, count]
-const _kSections = [
-  {'label': 'Night', 'icon': Icons.bedtime_outlined, 'start': 0, 'count': 12},
-  {'label': 'Morning', 'icon': Icons.wb_sunny_outlined, 'start': 12, 'count': 12},
-  {'label': 'Afternoon', 'icon': Icons.wb_twilight_outlined, 'start': 24, 'count': 12},
-  {'label': 'Evening', 'icon': Icons.nights_stay_outlined, 'start': 36, 'count': 12},
-];
+const _kBg      = Color(0xFF0A0818);
+const _kCard    = Color(0xFF13102A);
+const _kBorder  = Color(0xFF1E1B38);
+
+// ─── Day range model (local UI state) ────────────────────────────────────────
+
+class _DayRange {
+  final bool enabled;
+  final String from; // e.g. '09:00'
+  final String to;   // e.g. '17:00'
+  const _DayRange({this.enabled = false, this.from = '09:00', this.to = '17:00'});
+
+  _DayRange copyWith({bool? enabled, String? from, String? to}) => _DayRange(
+    enabled: enabled ?? this.enabled,
+    from: from ?? this.from,
+    to: to ?? this.to,
+  );
+
+  List<String> get slots {
+    final si = _kSlots.indexOf(from);
+    final ei = _kSlots.indexOf(to);
+    if (!enabled || si < 0 || ei < 0 || ei <= si) return [];
+    return _kSlots.sublist(si, ei + 1);
+  }
+
+  int get slotCount => slots.length;
+}
+
+_DayRange _rangeFromSlots(List<String> savedSlots) {
+  if (savedSlots.isEmpty) return const _DayRange();
+  final sorted = [...savedSlots]
+    ..sort((a, b) => _kSlots.indexOf(a).compareTo(_kSlots.indexOf(b)));
+  return _DayRange(enabled: true, from: sorted.first, to: sorted.last);
+}
+
+String _fmtSlot(String slot) {
+  final parts = slot.split(':');
+  final h = int.parse(parts[0]);
+  final m = parts[1];
+  final h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+  return '$h12:$m ${h < 12 ? 'AM' : 'PM'}';
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 class LawyerAvailabilityScreen extends StatefulWidget {
   const LawyerAvailabilityScreen({super.key});
@@ -38,528 +73,487 @@ class LawyerAvailabilityScreen extends StatefulWidget {
   State<LawyerAvailabilityScreen> createState() => _LawyerAvailabilityScreenState();
 }
 
-class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen>
-    with SingleTickerProviderStateMixin {
-  int _selectedDay = 0;
-  late AnimationController _saveAnim;
-  late Animation<double> _saveScale;
+class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
+  int _day = 0;
+  final _ranges = List<_DayRange>.filled(7, const _DayRange(), growable: false);
+  bool _hydrated = false;
 
-  @override
-  void initState() {
-    super.initState();
-    context.read<LawyerAvailabilityCubit>().startEdit();
-    _saveAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 100));
-    _saveScale = Tween(begin: 1.0, end: 0.94).animate(
-        CurvedAnimation(parent: _saveAnim, curve: Curves.easeOut));
+  void _hydrate(Map<int, List<String>> schedule) {
+    if (_hydrated) return;
+    _hydrated = true;
+    for (var i = 0; i < 7; i++) {
+      _ranges[i] = _rangeFromSlots(schedule[i] ?? []);
+    }
   }
 
-  @override
-  void dispose() {
-    _saveAnim.dispose();
-    super.dispose();
+  Map<int, List<String>> get _schedule {
+    final map = <int, List<String>>{};
+    for (var i = 0; i < 7; i++) {
+      final s = _ranges[i].slots;
+      if (s.isNotEmpty) map[i] = s;
+    }
+    return map;
+  }
+
+  Future<void> _pickTime(bool isFrom) async {
+    final current = isFrom ? _ranges[_day].from : _ranges[_day].to;
+    final initial = _kSlots.indexOf(current).clamp(0, _kSlots.length - 1);
+    final picked = await _showTimePicker(context, initial);
+    if (picked == null || !mounted) return;
+
+    setState(() {
+      final r = _ranges[_day];
+      if (isFrom) {
+        final toIdx   = _kSlots.indexOf(r.to);
+        final fromIdx = _kSlots.indexOf(picked);
+        _ranges[_day] = r.copyWith(
+          from: picked,
+          to: (toIdx <= fromIdx) ? _kSlots[(fromIdx + 2).clamp(0, _kSlots.length - 1)] : null,
+        );
+      } else {
+        final fromIdx = _kSlots.indexOf(r.from);
+        final toIdx   = _kSlots.indexOf(picked);
+        _ranges[_day] = r.copyWith(
+          to: (toIdx <= fromIdx) ? _kSlots[(fromIdx + 2).clamp(0, _kSlots.length - 1)] : picked,
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LawyerAvailabilityCubit, LawyerAvailabilityState>(
-      listener: (context, state) {
+      listener: (ctx, state) {
+        if (state is LawyerAvailabilityLoaded && !_hydrated) {
+          setState(() => _hydrate(state.schedule));
+        }
         if (state is LawyerAvailabilitySaved) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Row(children: [
-              const Icon(Icons.check_circle_outline_rounded,
-                  color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-              Text('Availability saved for 4 weeks!',
-                  style: GoogleFonts.outfit(color: Colors.white)),
-            ]),
+          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+            content: Text('Saved for 4 weeks', style: GoogleFonts.outfit(color: Colors.white)),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ));
         }
         if (state is LawyerAvailabilityError) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message,
-                style: GoogleFonts.outfit(color: Colors.white)),
+          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+            content: Text(state.message, style: GoogleFonts.outfit(color: Colors.white)),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ));
         }
       },
-      builder: (context, state) {
+      builder: (ctx, state) {
         final isSaving = state is LawyerAvailabilitySaving;
-        final schedule = state is LawyerAvailabilityLoaded
-            ? state.schedule
-            : <int, List<String>>{};
-        final isLoaded =
-            state is LawyerAvailabilityLoaded || state is LawyerAvailabilitySaved;
-        final selectedSlots = schedule[_selectedDay] ?? [];
-        final totalSelected =
-            schedule.values.fold<int>(0, (sum, slots) => sum + slots.length);
+        final isLoaded = state is LawyerAvailabilityLoaded || state is LawyerAvailabilitySaved;
+
+        if (isLoaded && !_hydrated) {
+          final schedule = state is LawyerAvailabilityLoaded ? state.schedule : <int, List<String>>{};
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _hydrate(schedule));
+          });
+        }
+
+        final r = _ranges[_day];
 
         return Scaffold(
-          backgroundColor: AppColors.bg,
-          body: Column(children: [
-            // ── Gradient header ─────────────────────────────────────────
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1A1040), Color(0xFF0D0A1E)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              padding: EdgeInsets.fromLTRB(
-                  20, MediaQuery.of(context).padding.top + 14, 20, 20),
-              child: Column(children: [
-                Row(children: [
+          backgroundColor: _kBg,
+          body: SafeArea(
+            child: Column(children: [
+
+              // ── Top bar ─────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Row(children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 38,
-                      height: 38,
+                      width: 38, height: 38,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: _kCard,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12)),
+                        border: Border.all(color: _kBorder),
                       ),
-                      child: const Icon(Icons.arrow_back,
-                          color: Colors.white, size: 18),
+                      child: const Icon(Icons.arrow_back, color: Colors.white54, size: 18),
                     ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Availability',
-                              style: GoogleFonts.outfit(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white)),
-                          Text('Set your weekly schedule',
-                              style: GoogleFonts.outfit(
-                                  fontSize: 12, color: Colors.white38)),
-                        ]),
+                    child: Text('Availability',
+                        style: GoogleFonts.outfit(
+                            fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
                   ),
-                  if (isLoaded) ...[
-                    ScaleTransition(
-                      scale: _saveScale,
-                      child: GestureDetector(
-                        onTapDown: (_) => _saveAnim.forward(),
-                        onTapUp: (_) async {
-                          await _saveAnim.reverse();
-                          if (!context.mounted) return;
-                          if (!isSaving) {
-                            context
-                                .read<LawyerAvailabilityCubit>()
-                                .save(schedule);
-                          }
-                        },
-                        onTapCancel: () => _saveAnim.reverse(),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            gradient: isSaving
-                                ? null
-                                : const LinearGradient(
-                                    colors: [
-                                      AppColors.cyan,
-                                      Color(0xFF00B8D9)
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                            color: isSaving
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : null,
-                            borderRadius: BorderRadius.circular(22),
-                            boxShadow: isSaving
-                                ? null
-                                : [
-                                    BoxShadow(
-                                      color: AppColors.cyan.withValues(alpha: 0.35),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                          ),
-                          child: isSaving
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.cyan))
-                              : Text('Save',
-                                  style: GoogleFonts.outfit(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.black87)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ]),
-
-                if (isLoaded) ...[
-                  const SizedBox(height: 20),
-                  // Stats row
-                  Row(children: [
-                    _StatPill(
-                      icon: Icons.schedule_rounded,
-                      label:
-                          '$totalSelected slot${totalSelected == 1 ? '' : 's'} total',
-                      color: AppColors.cyan,
-                    ),
-                    const SizedBox(width: 10),
-                    _StatPill(
-                      icon: Icons.today_rounded,
-                      label:
-                          '${selectedSlots.length} on ${_kDays[_selectedDay]}',
-                      color: const Color(0xFFBB86FC),
-                    ),
-                  ]),
-                ],
-              ]),
-            ),
-
-            if (state is LawyerAvailabilityInitial ||
-                state is LawyerAvailabilitySaving && !isLoaded)
-              const Expanded(
-                  child: Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.cyan, strokeWidth: 2))),
-
-            if (isLoaded) ...[
-              // ── Day selector ─────────────────────────────────────────────
-              Container(
-                color: const Color(0xFF0D0A1E),
-                padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
-                child: SizedBox(
-                  height: 72,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _kDays.length,
-                    separatorBuilder: (_, i) => const SizedBox(width: 10),
-                    itemBuilder: (_, i) {
-                      final isSelected = i == _selectedDay;
-                      final daySlots = schedule[i] ?? [];
-                      final hasSlots = daySlots.isNotEmpty;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedDay = i),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOutCubic,
-                          width: 52,
-                          decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? const LinearGradient(
-                                    colors: [
-                                      Color(0xFF7B2FBE),
-                                      Color(0xFF5B1FAE)
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : null,
-                            color: isSelected
-                                ? null
-                                : Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF9B4FDE)
-                                  : Colors.white.withValues(alpha: 0.08),
-                              width: isSelected ? 1.5 : 1,
-                            ),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFF7B2FBE)
-                                          .withValues(alpha: 0.4),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ]
-                                : null,
-                          ),
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(_kDays[i],
-                                    style: GoogleFonts.outfit(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.white38)),
-                                const SizedBox(height: 6),
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: hasSlots
-                                        ? (isSelected
-                                            ? Colors.white
-                                            : AppColors.cyan)
-                                        : Colors.transparent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ]),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              // ── Day label + clear ──────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-                child: Row(children: [
-                  Text(_kFullDays[_selectedDay],
-                      style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white)),
-                  const SizedBox(width: 8),
-                  if (selectedSlots.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.cyan.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text('${selectedSlots.length}',
-                          style: GoogleFonts.outfit(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.cyan)),
-                    ),
-                  const Spacer(),
-                  if (selectedSlots.isNotEmpty)
+                  if (isLoaded)
                     GestureDetector(
-                      onTap: () => context
-                          .read<LawyerAvailabilityCubit>()
-                          .clearDay(_selectedDay),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 5),
+                      onTap: isSaving ? null : () =>
+                          context.read<LawyerAvailabilityCubit>().save(_schedule),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: AppColors.error.withValues(alpha: 0.25)),
+                          color: isSaving ? _kCard : Colors.white,
+                          borderRadius: BorderRadius.circular(22),
                         ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.clear_rounded,
-                              size: 13, color: AppColors.error),
-                          const SizedBox(width: 4),
-                          Text('Clear',
-                              style: GoogleFonts.outfit(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.error)),
-                        ]),
+                        child: isSaving
+                            ? const SizedBox(width: 16, height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black38))
+                            : Text('Save',
+                                style: GoogleFonts.outfit(
+                                    fontSize: 13, fontWeight: FontWeight.w700, color: Colors.black87)),
                       ),
                     ),
                 ]),
               ),
 
-              // ── Slot sections ──────────────────────────────────────────
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  children: _kSections.map((section) {
-                    final start = section['start'] as int;
-                    final count = section['count'] as int;
-                    final slots = _kSlots.sublist(start, start + count);
-                    final icon = section['icon'] as IconData;
-                    final label = section['label'] as String;
-
-                    return _TimeSection(
-                      icon: icon,
-                      label: label,
-                      slots: slots,
-                      selectedSlots: selectedSlots,
-                      onToggle: (slot) => context
-                          .read<LawyerAvailabilityCubit>()
-                          .toggleSlot(_selectedDay, slot),
+              // ── Day picker ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                child: Row(
+                  children: List.generate(7, (i) {
+                    final isOn     = i == _day;
+                    final hasSlots = _ranges[i].enabled;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _day = i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          margin: EdgeInsets.only(right: i < 6 ? 6 : 0),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
+                            color: isOn ? Colors.white : _kCard,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: isOn ? Colors.white : _kBorder),
+                          ),
+                          child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            Text(_kDays[i],
+                                style: GoogleFonts.outfit(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: isOn ? Colors.black87 : Colors.white30)),
+                            const SizedBox(height: 5),
+                            Container(
+                              width: 4, height: 4,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: hasSlots
+                                    ? (isOn ? const Color(0xFF6B46C1) : Colors.white30)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ),
                     );
-                  }).toList(),
+                  }),
                 ),
               ),
-            ],
-          ]),
+
+              // ── Loading ─────────────────────────────────────────────
+              if (!isLoaded)
+                const Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.white24, strokeWidth: 2),
+                  ),
+                ),
+
+              // ── Day config card ─────────────────────────────────────
+              if (isLoaded) ...[
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                      // Day name + toggle
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: _kCard,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: _kBorder),
+                        ),
+                        child: Row(children: [
+                          Text(_kFullDays[_day],
+                              style: GoogleFonts.outfit(
+                                  fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                          const Spacer(),
+                          _MinimalSwitch(
+                            value: r.enabled,
+                            onChanged: (v) => setState(() =>
+                                _ranges[_day] = _ranges[_day].copyWith(enabled: v)),
+                          ),
+                        ]),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // From / To pickers
+                      AnimatedOpacity(
+                        opacity: r.enabled ? 1.0 : 0.3,
+                        duration: const Duration(milliseconds: 200),
+                        child: IgnorePointer(
+                          ignoring: !r.enabled,
+                          child: Row(children: [
+                            Expanded(child: _TimePill(
+                              label: 'From',
+                              value: _fmtSlot(r.from),
+                              onTap: () => _pickTime(true),
+                            )),
+                            const SizedBox(width: 12),
+                            // Arrow
+                            Icon(Icons.arrow_forward_rounded,
+                                color: Colors.white.withValues(alpha: 0.16), size: 18),
+                            const SizedBox(width: 12),
+                            Expanded(child: _TimePill(
+                              label: 'To',
+                              value: _fmtSlot(r.to),
+                              onTap: () => _pickTime(false),
+                            )),
+                          ]),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Slot count hint
+                      if (r.enabled && r.slotCount > 0)
+                        Text(
+                          '${r.slotCount} slot${r.slotCount == 1 ? '' : 's'} · every 30 min',
+                          style: GoogleFonts.outfit(
+                              fontSize: 12, color: Colors.white24),
+                        ),
+
+                      const Spacer(),
+
+                      // Week summary
+                      _WeekSummary(ranges: _ranges),
+                    ]),
+                  ),
+                ),
+              ],
+            ]),
+          ),
         );
       },
     );
   }
 }
 
-// ─── Time section ─────────────────────────────────────────────────────────────
+// ─── Time picker bottom sheet ─────────────────────────────────────────────────
 
-class _TimeSection extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final List<String> slots;
-  final List<String> selectedSlots;
-  final void Function(String) onToggle;
-
-  const _TimeSection({
-    required this.icon,
-    required this.label,
-    required this.slots,
-    required this.selectedSlots,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final selectedInSection = slots.where(selectedSlots.contains).length;
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // Section header
-      Padding(
-        padding: const EdgeInsets.fromLTRB(0, 6, 0, 10),
-        child: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child:
-                Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.5)),
-          ),
-          const SizedBox(width: 8),
-          Text(label,
-              style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.45))),
-          const SizedBox(width: 6),
-          if (selectedInSection > 0)
-            Text('($selectedInSection)',
-                style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.cyan.withValues(alpha: 0.8))),
-          const Spacer(),
-          Expanded(
-            child: Container(
-                height: 1,
-                color: Colors.white.withValues(alpha: 0.06)),
-          ),
-        ]),
-      ),
-
-      // 4-column grid
-      GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          childAspectRatio: 2.0,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemCount: slots.length,
-        itemBuilder: (_, i) {
-          final slot = slots[i];
-          final isOn = selectedSlots.contains(slot);
-          return GestureDetector(
-            onTap: () => onToggle(slot),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOutCubic,
-              decoration: BoxDecoration(
-                gradient: isOn
-                    ? const LinearGradient(
-                        colors: [Color(0xFF00B8D9), AppColors.cyan],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                color: isOn ? null : Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isOn
-                      ? AppColors.cyan.withValues(alpha: 0.6)
-                      : Colors.white.withValues(alpha: 0.07),
-                  width: isOn ? 1.5 : 1,
-                ),
-                boxShadow: isOn
-                    ? [
-                        BoxShadow(
-                          color: AppColors.cyan.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : null,
-              ),
-              child: Center(
-                child: Text(
-                  _fmt(slot),
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: isOn ? FontWeight.w800 : FontWeight.w500,
-                    color: isOn
-                        ? Colors.black87
-                        : Colors.white.withValues(alpha: 0.55),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-      const SizedBox(height: 16),
-    ]);
-  }
-
-  String _fmt(String slot) {
-    final parts = slot.split(':');
-    final h = int.parse(parts[0]);
-    final m = parts[1];
-    final period = h < 12 ? 'AM' : 'PM';
-    final h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
-    return '$h12:$m\n$period';
-  }
+Future<String?> _showTimePicker(BuildContext context, int initialIndex) {
+  return showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => _TimePickerSheet(initialIndex: initialIndex),
+  );
 }
 
-// ─── Stat pill ────────────────────────────────────────────────────────────────
+class _TimePickerSheet extends StatefulWidget {
+  final int initialIndex;
+  const _TimePickerSheet({required this.initialIndex});
 
-class _StatPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _StatPill({required this.icon, required this.label, required this.color});
+  @override
+  State<_TimePickerSheet> createState() => _TimePickerSheetState();
+}
+
+class _TimePickerSheetState extends State<_TimePickerSheet> {
+  late int _selected;
+  late ScrollController _scroll;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initialIndex;
+    _scroll = ScrollController(
+      initialScrollOffset: (_selected * 52.0) - 104,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+      height: MediaQuery.of(context).size.height * 0.55,
+      decoration: const BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 13, color: color),
-        const SizedBox(width: 6),
-        Text(label,
+      child: Column(children: [
+        // Handle
+        const SizedBox(height: 12),
+        Container(
+          width: 36, height: 4,
+          decoration: BoxDecoration(
+            color: Colors.white12,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('Select Time',
             style: GoogleFonts.outfit(
-                fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+                fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+        const SizedBox(height: 12),
+        const Divider(color: _kBorder, height: 1),
+
+        // Time list
+        Expanded(
+          child: ListView.builder(
+            controller: _scroll,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: _kSlots.length,
+            itemExtent: 52,
+            itemBuilder: (_, i) {
+              final isOn = i == _selected;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selected = i);
+                  Future.delayed(const Duration(milliseconds: 120), () {
+                    if (mounted) Navigator.pop(context, _kSlots[i]);
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  margin: const EdgeInsets.fromLTRB(20, 3, 20, 3),
+                  decoration: BoxDecoration(
+                    color: isOn ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _fmtSlot(_kSlots[i]),
+                      style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: isOn ? FontWeight.w700 : FontWeight.w400,
+                          color: isOn ? Colors.black87 : Colors.white38),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─── Time pill ────────────────────────────────────────────────────────────────
+
+class _TimePill extends StatelessWidget {
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  const _TimePill({required this.label, required this.value, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: _kCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _kBorder),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label,
+              style: GoogleFonts.outfit(
+                  fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white30)),
+          const SizedBox(height: 6),
+          Row(children: [
+            Expanded(
+              child: Text(value,
+                  style: GoogleFonts.outfit(
+                      fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+            const Icon(Icons.expand_more_rounded, color: Colors.white24, size: 18),
+          ]),
+        ]),
+      ),
+    );
+  }
+}
+
+// ─── Minimal switch ───────────────────────────────────────────────────────────
+
+class _MinimalSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _MinimalSwitch({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 44, height: 24,
+        decoration: BoxDecoration(
+          color: value ? Colors.white : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 200),
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 18, height: 18,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: BoxDecoration(
+              color: value ? Colors.black87 : Colors.white24,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Week summary ─────────────────────────────────────────────────────────────
+
+class _WeekSummary extends StatelessWidget {
+  final List<_DayRange> ranges;
+  const _WeekSummary({required this.ranges});
+
+  @override
+  Widget build(BuildContext context) {
+    final activeDays = ranges
+        .asMap()
+        .entries
+        .where((e) => e.value.enabled)
+        .map((e) => _kDays[e.key])
+        .toList();
+
+    if (activeDays.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kBorder),
+      ),
+      child: Row(children: [
+        const Icon(Icons.calendar_month_outlined, size: 15, color: Colors.white24),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            activeDays.join(' · '),
+            style: GoogleFonts.outfit(
+                fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white38),
+          ),
+        ),
+        Text(
+          '${ranges.fold<int>(0, (s, r) => s + r.slotCount)} slots',
+          style: GoogleFonts.outfit(
+              fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white24),
+        ),
       ]),
     );
   }
