@@ -6,6 +6,8 @@ import 'config/routes/app_routes.dart';
 import 'core/services/service_locator.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/presentation/cubits/auth_cubit.dart';
+import 'features/admin/data/repositories/admin_repository.dart';
+import 'features/admin/presentation/cubits/admin_cubit.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/client_signup_screen.dart';
@@ -38,6 +40,9 @@ class WakeellApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthCubit>(
           create: (_) => AuthCubit(getIt<AuthRepository>()),
+        ),
+        BlocProvider<AdminCubit>(
+          create: (_) => AdminCubit(getIt<AdminRepository>()),
         ),
       ],
       child: MaterialApp(
