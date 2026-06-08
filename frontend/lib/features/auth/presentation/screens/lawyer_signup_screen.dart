@@ -25,9 +25,11 @@ class _LawyerSignupScreenState extends State<LawyerSignupScreen> {
   final _nameCtrl = TextEditingController();
   final _titleCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _barLicenseCtrl = TextEditingController();
   final _summaryCtrl = TextEditingController();
+  bool _obscurePassword = true;
 
   // ── Step 2 ─────────────────────────────────────────────────────────────────
   XFile? _profilePhoto;
@@ -46,6 +48,7 @@ class _LawyerSignupScreenState extends State<LawyerSignupScreen> {
     _nameCtrl.dispose();
     _titleCtrl.dispose();
     _emailCtrl.dispose();
+    _passwordCtrl.dispose();
     _phoneCtrl.dispose();
     _barLicenseCtrl.dispose();
     _summaryCtrl.dispose();
@@ -127,7 +130,7 @@ class _LawyerSignupScreenState extends State<LawyerSignupScreen> {
     context.read<AuthCubit>().registerLawyer(
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
-          password: '${_nameCtrl.text.trim().split(' ').first}@123',
+          password: _passwordCtrl.text,
           barLicense: _barLicenseCtrl.text.trim(),
           phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
           bio: _summaryCtrl.text.trim().isEmpty ? null : _summaryCtrl.text.trim(),
@@ -162,6 +165,9 @@ class _LawyerSignupScreenState extends State<LawyerSignupScreen> {
                       nameCtrl: _nameCtrl,
                       titleCtrl: _titleCtrl,
                       emailCtrl: _emailCtrl,
+                      passwordCtrl: _passwordCtrl,
+                      obscurePassword: _obscurePassword,
+                      onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
                       phoneCtrl: _phoneCtrl,
                       barLicenseCtrl: _barLicenseCtrl,
                       summaryCtrl: _summaryCtrl,
@@ -314,12 +320,15 @@ class _StepIndicator extends StatelessWidget {
 
 class _Step1PersonalInfo extends StatelessWidget {
   final GlobalKey<FormState> formKey;
-  final TextEditingController nameCtrl, titleCtrl, emailCtrl, phoneCtrl, barLicenseCtrl, summaryCtrl;
+  final TextEditingController nameCtrl, titleCtrl, emailCtrl, passwordCtrl, phoneCtrl, barLicenseCtrl, summaryCtrl;
+  final bool obscurePassword;
+  final VoidCallback onToggleObscure;
   final VoidCallback onNext;
 
   const _Step1PersonalInfo({
     required this.formKey, required this.nameCtrl, required this.titleCtrl,
-    required this.emailCtrl, required this.phoneCtrl, required this.barLicenseCtrl,
+    required this.emailCtrl, required this.passwordCtrl, required this.obscurePassword,
+    required this.onToggleObscure, required this.phoneCtrl, required this.barLicenseCtrl,
     required this.summaryCtrl, required this.onNext,
   });
 
@@ -359,6 +368,32 @@ class _Step1PersonalInfo extends StatelessWidget {
                 if (!v.contains('@')) return 'Enter a valid email';
                 return null;
               }),
+            const SizedBox(height: 16),
+
+            _label('SECURE PASSWORD *'),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: passwordCtrl,
+              obscureText: obscurePassword,
+              textInputAction: TextInputAction.next,
+              style: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: '••••••••••••',
+                prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                suffixIcon: GestureDetector(
+                  onTap: onToggleObscure,
+                  child: Icon(
+                    obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: AppColors.textSecondary, size: 20,
+                  ),
+                ),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Password is required';
+                if (v.length < 8) return 'Password must be at least 8 characters';
+                return null;
+              },
+            ),
             const SizedBox(height: 16),
 
             _label('BAR LICENSE NUMBER *'),
