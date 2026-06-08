@@ -83,7 +83,7 @@ class LawyerGatewayScreen extends StatelessWidget {
                 subtitle: 'Access your client bookings, sessions\nand earnings dashboard.',
                 iconData: Icons.login_rounded,
                 isPrimary: true,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.login),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.lawyerLogin),
               ),
               const SizedBox(height: 16),
 

@@ -4,6 +4,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String lawyerGateway  = '/lawyer';
+  static const String lawyerLogin    = '/lawyer/login';
   static const String registerLawyer = '/register/lawyer';
   static const String home = '/home';
   static const String lawyers = '/lawyers';
