@@ -6,11 +6,12 @@ import '../../data/models/booking_model.dart';
 import '../cubits/client_bookings_cubit.dart';
 import '../cubits/client_bookings_state.dart';
 
-const _kFilters = ['all', 'pending', 'confirmed', 'cancelled'];
+const _kFilters = ['all', 'pending', 'accepted', 'declined', 'cancelled'];
 const _kFilterLabels = {
   'all': 'All',
   'pending': 'Pending',
-  'confirmed': 'Confirmed',
+  'accepted': 'Accepted',
+  'declined': 'Declined',
   'cancelled': 'Cancelled',
 };
 
@@ -189,7 +190,7 @@ class _BookingCard extends StatelessWidget {
             ],
           ]),
         ),
-        if (booking.status == 'confirmed') ...[
+        if (booking.status == 'accepted') ...[
           const Divider(height: 1, color: AppColors.divider),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

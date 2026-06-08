@@ -59,9 +59,11 @@ class BookingModel extends Equatable {
 
   Color get statusColor {
     switch (status) {
-      case 'confirmed': return const Color(0xFF16A34A);
+      case 'accepted':  return const Color(0xFF16A34A);
+      case 'declined':  return const Color(0xFFDC2626);
       case 'cancelled': return const Color(0xFFDC2626);
-      default:          return const Color(0xFFD97706);
+      case 'completed': return const Color(0xFF2563EB);
+      default:          return const Color(0xFFD97706); // pending
     }
   }
 

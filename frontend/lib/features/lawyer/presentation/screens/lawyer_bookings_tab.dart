@@ -6,8 +6,8 @@ import '../../../booking/data/models/booking_model.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_state.dart';
 
-const _kFilters = ['all', 'pending', 'confirmed', 'cancelled'];
-const _kFilterLabels = {'all': 'All', 'pending': 'Pending', 'confirmed': 'Confirmed', 'cancelled': 'Cancelled'};
+const _kFilters = ['all', 'pending', 'accepted', 'declined', 'cancelled'];
+const _kFilterLabels = {'all': 'All', 'pending': 'Pending', 'accepted': 'Accepted', 'declined': 'Declined', 'cancelled': 'Cancelled'};
 
 class LawyerBookingsTab extends StatelessWidget {
   const LawyerBookingsTab({super.key});
@@ -82,8 +82,8 @@ class LawyerBookingsTab extends StatelessWidget {
                     separatorBuilder: (_, i) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => _BookingCard(
                       booking: state.bookings[i],
-                      onConfirm: () => context.read<LawyerBookingsCubit>().respond(state.bookings[i].id, 'confirmed'),
-                      onCancel: () => context.read<LawyerBookingsCubit>().respond(state.bookings[i].id, 'cancelled'),
+                      onConfirm: () => context.read<LawyerBookingsCubit>().respond(state.bookings[i].id, 'accepted'),
+                      onCancel: () => context.read<LawyerBookingsCubit>().respond(state.bookings[i].id, 'declined'),
                     ),
                   ),
                 );
