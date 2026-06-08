@@ -360,7 +360,9 @@ class _BookingCard extends StatelessWidget {
   static String _formatSlot(String slot) {
     final parts = slot.split(':');
     final hour = int.tryParse(parts[0]) ?? 0;
-    return hour < 12 ? '${hour == 0 ? 12 : hour}:00 AM' : '${hour == 12 ? 12 : hour - 12}:00 PM';
+    final min = parts.length > 1 ? (parts[1]) : '00';
+    final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return hour < 12 ? '$h12:$min AM' : '$h12:$min PM';
   }
 }
 
