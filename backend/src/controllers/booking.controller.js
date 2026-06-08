@@ -14,9 +14,14 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ message: 'Lawyer is not available for bookings' });
     }
 
-    // Verify slot availability
+    // Verify slot availability — slots may be a JS array or a raw JSON string
     const avail = await LawyerAvailability.findOne({ where: { lawyerId, date } });
-    if (!avail || !Array.isArray(avail.slots) || !avail.slots.includes(timeSlot)) {
+    if (!avail) return res.status(400).json({ message: 'Time slot not available' });
+    let slotsArr = avail.slots;
+    if (!Array.isArray(slotsArr)) {
+      try { slotsArr = JSON.parse(slotsArr); } catch { slotsArr = []; }
+    }
+    if (!slotsArr.includes(timeSlot)) {
       return res.status(400).json({ message: 'Time slot not available' });
     }
 
