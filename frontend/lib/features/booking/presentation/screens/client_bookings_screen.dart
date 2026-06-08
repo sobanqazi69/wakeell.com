@@ -7,11 +7,12 @@ import '../../data/models/booking_model.dart';
 import '../cubits/client_bookings_cubit.dart';
 import '../cubits/client_bookings_state.dart';
 
-const _kFilters = ['all', 'pending', 'accepted', 'declined', 'cancelled'];
+const _kFilters = ['all', 'pending', 'accepted', 'completed', 'declined', 'cancelled'];
 const _kFilterLabels = {
   'all': 'All',
   'pending': 'Pending',
   'accepted': 'Accepted',
+  'completed': 'Completed',
   'declined': 'Declined',
   'cancelled': 'Cancelled',
 };
@@ -200,6 +201,7 @@ class _BookingCard extends StatelessWidget {
                 'bookingId':      booking.id,
                 'otherPartyName': booking.lawyerName ?? 'Lawyer',
                 'sessionType':    booking.sessionType,
+                'isClient':       true,
               }),
               child: Container(
                 height: 40,
@@ -214,6 +216,57 @@ class _BookingCard extends StatelessWidget {
                 ]),
               ),
             ),
+          ),
+        ],
+        if (booking.status == 'completed') ...[
+          const Divider(height: 1, color: AppColors.divider),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: {
+                    'bookingId':      booking.id,
+                    'otherPartyName': booking.lawyerName ?? 'Lawyer',
+                  }),
+                  child: Container(
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.fieldBorder),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      const Icon(Icons.chat_bubble_outline, size: 15, color: AppColors.cyan),
+                      const SizedBox(width: 6),
+                      Text('Chat', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.cyan)),
+                    ]),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.review, arguments: {
+                    'bookingId':  booking.id,
+                    'lawyerName': booking.lawyerName ?? 'Lawyer',
+                  }),
+                  child: Container(
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD4A843).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFD4A843).withValues(alpha: 0.4)),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      const Icon(Icons.star_outline_rounded, size: 15, color: Color(0xFFD4A843)),
+                      const SizedBox(width: 6),
+                      Text('Review', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFD4A843))),
+                    ]),
+                  ),
+                ),
+              ),
+            ]),
           ),
         ],
       ]),

@@ -225,19 +225,28 @@ class _BookingForm extends StatelessWidget {
                 runSpacing: 8,
                 children: state.slotsForDate.map((slot) {
                   final isSelected = slot == state.selectedSlot;
+                  final isPast     = _isSlotPast(slot, state.selectedDate ?? '');
                   return GestureDetector(
-                    onTap: () => context.read<ClientBookingCubit>().onSlotSelected(slot),
+                    onTap: isPast ? null : () => context.read<ClientBookingCubit>().onSlotSelected(slot),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.navy : AppColors.surface,
+                        color: isPast
+                            ? AppColors.bg
+                            : isSelected ? AppColors.navy : AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isSelected ? AppColors.navy : AppColors.fieldBorder),
+                        border: Border.all(
+                          color: isPast
+                              ? AppColors.fieldBorder.withValues(alpha: 0.4)
+                              : isSelected ? AppColors.navy : AppColors.fieldBorder,
+                        ),
                       ),
                       child: Text(_formatSlot(slot),
                         style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : AppColors.textSecondary)),
+                          color: isPast
+                              ? AppColors.textSecondary.withValues(alpha: 0.35)
+                              : isSelected ? Colors.white : AppColors.textSecondary)),
                     ),
                   );
                 }).toList(),
@@ -258,8 +267,8 @@ class _BookingForm extends StatelessWidget {
               Expanded(child: _TypeTile(
                 icon: Icons.phone_outlined,
                 label: 'Phone Call',
-                isSelected: state.sessionType == 'phone',
-                onTap: () => context.read<ClientBookingCubit>().onSessionTypeChanged('phone'),
+                isSelected: state.sessionType == 'audio',
+                onTap: () => context.read<ClientBookingCubit>().onSessionTypeChanged('audio'),
               )),
             ]),
             const SizedBox(height: 22),
@@ -358,6 +367,25 @@ class _BookingForm extends StatelessWidget {
     return hour < 12
         ? '${hour == 0 ? 12 : hour}:00 AM'
         : '${hour == 12 ? 12 : hour - 12}:00 PM';
+  }
+
+  static bool _isSlotPast(String slot, String date) {
+    try {
+      final now = DateTime.now();
+      final dateParts = date.split('-');
+      final timeParts = slot.split(':');
+      if (dateParts.length < 3 || timeParts.length < 2) return false;
+      final slotDt = DateTime(
+        int.parse(dateParts[0]),
+        int.parse(dateParts[1]),
+        int.parse(dateParts[2]),
+        int.parse(timeParts[0]),
+        int.parse(timeParts[1]),
+      );
+      return slotDt.isBefore(now);
+    } catch (_) {
+      return false;
+    }
   }
 
   static String _dayShort(DateTime d) =>

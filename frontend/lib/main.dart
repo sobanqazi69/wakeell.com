@@ -79,8 +79,12 @@ class WakeellApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthCubit>(create: (_) => AuthCubit(getIt<AuthRepository>())),
-        BlocProvider<AdminCubit>(create: (_) => AdminCubit(getIt<AdminRepository>())),
+        BlocProvider<AuthCubit>(
+          create: (_) => AuthCubit(getIt<AuthRepository>()),
+        ),
+        BlocProvider<AdminCubit>(
+          create: (_) => AdminCubit(getIt<AdminRepository>()),
+        ),
         BlocProvider<NotificationsCubit>(
           create: (_) => NotificationsCubit(getIt<NotificationRepository>()),
         ),
@@ -92,13 +96,13 @@ class WakeellApp extends StatelessWidget {
         navigatorKey: navigatorKey,
         initialRoute: AppRoutes.splash,
         routes: {
-          AppRoutes.splash:         (_) => const SplashScreen(),
-          AppRoutes.login:          (_) => const LoginScreen(),
-          AppRoutes.register:       (_) => const ClientSignupScreen(),
-          AppRoutes.lawyerGateway:  (_) => const LawyerGatewayScreen(),
-          AppRoutes.lawyerLogin:    (_) => const LawyerLoginScreen(),
+          AppRoutes.splash: (_) => const SplashScreen(),
+          AppRoutes.login: (_) => const LoginScreen(),
+          AppRoutes.register: (_) => const ClientSignupScreen(),
+          AppRoutes.lawyerGateway: (_) => const LawyerGatewayScreen(),
+          AppRoutes.lawyerLogin: (_) => const LawyerLoginScreen(),
           AppRoutes.registerLawyer: (_) => const LawyerSignupScreen(),
-          AppRoutes.home:           (_) => const HomeScreen(),
+          AppRoutes.home: (_) => const HomeScreen(),
           AppRoutes.lawyers: (_) => BlocProvider(
             create: (_) => LawyerListCubit(getIt<LawyerRepository>()),
             child: const LawyersListScreen(),
@@ -108,7 +112,10 @@ class WakeellApp extends StatelessWidget {
             child: const LawyerDetailScreen(),
           ),
           AppRoutes.lawyerProfileEdit: (_) => BlocProvider(
-            create: (_) => LawyerProfileCubit(getIt<LawyerRepository>(), getIt<AuthRepository>()),
+            create: (_) => LawyerProfileCubit(
+              getIt<LawyerRepository>(),
+              getIt<AuthRepository>(),
+            ),
             child: const LawyerProfileEditScreen(),
           ),
           AppRoutes.lawyerAvailability: (_) => BlocProvider(
@@ -116,50 +123,60 @@ class WakeellApp extends StatelessWidget {
             child: const LawyerAvailabilityScreen(),
           ),
           AppRoutes.lawyerNotifications: (_) => const NotificationsScreen(),
-          AppRoutes.notifications:       (_) => const NotificationsScreen(),
+          AppRoutes.notifications: (_) => const NotificationsScreen(),
           AppRoutes.review: (ctx) {
-            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            final args =
+                ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
             return BlocProvider(
               create: (_) => ReviewCubit(getIt<ReviewRepository>()),
               child: ReviewScreen(
-                bookingId:  args['bookingId'] as int,
+                bookingId: args['bookingId'] as int,
                 lawyerName: args['lawyerName'] as String? ?? 'Lawyer',
               ),
             );
           },
           AppRoutes.chat: (ctx) {
-            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            final args =
+                ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
             final authState = ctx.read<AuthCubit>().state;
-            final userId = authState is AuthAuthenticated ? authState.user.id : 0;
+            final userId = authState is AuthAuthenticated
+                ? authState.user.id
+                : 0;
             return BlocProvider(
               create: (_) => ChatCubit(
-                repo:          getIt<ChatRepository>(),
-                socket:        getIt<SocketService>(),
-                bookingId:     args['bookingId'] as int,
+                repo: getIt<ChatRepository>(),
+                socket: getIt<SocketService>(),
+                bookingId: args['bookingId'] as int,
                 currentUserId: userId,
               ),
               child: ChatScreen(
-                otherPartyName: args['otherPartyName'] as String? ?? 'Consultant',
+                otherPartyName:
+                    args['otherPartyName'] as String? ?? 'Consultant',
               ),
             );
           },
           AppRoutes.booking: (_) => BlocProvider(
-            create: (_) => ClientBookingCubit(getIt<BookingRepository>(), getIt<LawyerRepository>()),
+            create: (_) => ClientBookingCubit(
+              getIt<BookingRepository>(),
+              getIt<LawyerRepository>(),
+            ),
             child: const BookingScreen(),
           ),
           AppRoutes.clientBookings: (_) => BlocProvider(
-            create: (_) => ClientBookingsCubit(getIt<BookingRepository>())..load(),
+            create: (_) =>
+                ClientBookingsCubit(getIt<BookingRepository>())..load(),
             child: const ClientBookingsScreen(),
           ),
           AppRoutes.session: (ctx) {
-            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            final args =
+                ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
             return BlocProvider(
               create: (_) => SessionCubit(getIt<SessionRepository>()),
               child: SessionScreen(
-                bookingId:      args['bookingId'] as int,
+                bookingId: args['bookingId'] as int,
                 otherPartyName: args['otherPartyName'] as String,
-                sessionType:    args['sessionType'] as String? ?? 'video',
-                isClient:       args['isClient'] as bool? ?? false,
+                sessionType: args['sessionType'] as String? ?? 'video',
+                isClient: args['isClient'] as bool? ?? false,
               ),
             );
           },

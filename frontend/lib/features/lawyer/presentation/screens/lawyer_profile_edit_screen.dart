@@ -221,7 +221,7 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: _Field(
-                      label: 'Hourly Rate (PKR)',
+                      label: 'Consultation Fee (PKR)',
                       controller: _rateCtrl,
                       icon: Icons.attach_money_rounded,
                       keyboardType: TextInputType.number,

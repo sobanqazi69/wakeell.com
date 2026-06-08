@@ -7,8 +7,8 @@ import '../../../booking/data/models/booking_model.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_state.dart';
 
-const _kFilters = ['all', 'pending', 'accepted', 'declined', 'cancelled'];
-const _kFilterLabels = {'all': 'All', 'pending': 'Pending', 'accepted': 'Accepted', 'declined': 'Declined', 'cancelled': 'Cancelled'};
+const _kFilters = ['all', 'pending', 'accepted', 'completed', 'declined', 'cancelled'];
+const _kFilterLabels = {'all': 'All', 'pending': 'Pending', 'accepted': 'Accepted', 'completed': 'Completed', 'declined': 'Declined', 'cancelled': 'Cancelled'};
 
 class LawyerBookingsTab extends StatelessWidget {
   const LawyerBookingsTab({super.key});
@@ -161,6 +161,19 @@ class _BookingCard extends StatelessWidget {
               'bookingId':      booking.id,
               'otherPartyName': booking.clientName ?? 'Client',
               'sessionType':    booking.sessionType,
+              'isClient':       false,
+            }),
+          )),
+        ],
+        if (booking.status == 'completed') ...[
+          const SizedBox(height: 12),
+          Builder(builder: (ctx) => _Btn(
+            label: 'Chat with Client',
+            color: AppColors.cyan,
+            filled: false,
+            onTap: () => Navigator.pushNamed(ctx, AppRoutes.chat, arguments: {
+              'bookingId':      booking.id,
+              'otherPartyName': booking.clientName ?? 'Client',
             }),
           )),
         ],

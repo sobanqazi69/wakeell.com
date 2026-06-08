@@ -52,7 +52,7 @@ class LawyerModel extends Equatable {
         bio:             handleNullableStringKey(json, 'bio') ?? '',
         languages:       (handleNullableListKey(json, 'languages') ?? []).cast<String>(),
         hourlyRate:      double.tryParse('${json['hourlyRate'] ?? 0}') ?? 0,
-        currency:        handleNullableStringKey(json, 'currency') ?? 'USD',
+        currency:        handleNullableStringKey(json, 'currency') ?? 'PKR',
         experience:      handleNullableIntKey(json, 'experience') ?? 0,
         rating:          double.tryParse('${json['rating'] ?? 0}') ?? 0,
         reviewCount:     handleNullableIntKey(json, 'reviewCount') ?? 0,
@@ -66,7 +66,7 @@ class LawyerModel extends Equatable {
     } catch (_) {
       return const LawyerModel(
         id: 0, userId: 0, barLicense: '', specializations: [], bio: '',
-        languages: [], hourlyRate: 0, currency: 'USD', experience: 0,
+        languages: [], hourlyRate: 0, currency: 'PKR', experience: 0,
         rating: 0, reviewCount: 0, status: 'approved', name: '',
       );
     }
@@ -79,7 +79,7 @@ class LawyerModel extends Equatable {
     return '?';
   }
 
-  String get formattedRate => hourlyRate == 0 ? 'Free' : '\$${hourlyRate.toStringAsFixed(0)}/hr';
+  String get formattedRate => hourlyRate == 0 ? 'Free' : 'PKR ${hourlyRate.toStringAsFixed(0)}';
 
   String get ratingDisplay => rating == 0 ? '—' : rating.toStringAsFixed(1);
 
