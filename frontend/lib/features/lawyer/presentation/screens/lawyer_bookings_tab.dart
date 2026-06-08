@@ -152,7 +152,7 @@ class _BookingCard extends StatelessWidget {
             Expanded(child: _Btn(label: 'Decline', color: AppColors.error, filled: false, onTap: onCancel)),
           ]),
         ],
-        if (booking.status == 'accepted') ...[
+        if (booking.canJoin) ...[
           const SizedBox(height: 12),
           Builder(builder: (ctx) => _Btn(
             label: 'Join Session',

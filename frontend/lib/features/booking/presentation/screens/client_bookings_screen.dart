@@ -191,7 +191,7 @@ class _BookingCard extends StatelessWidget {
             ],
           ]),
         ),
-        if (booking.status == 'accepted') ...[
+        if (booking.canJoin) ...[
           const Divider(height: 1, color: AppColors.divider),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

@@ -57,6 +57,28 @@ class BookingModel extends Equatable {
     }
   }
 
+  /// True when the session window is open: from 5 min before start until end.
+  bool get canJoin {
+    if (status != 'accepted') return false;
+    try {
+      final parts = date.split('-');
+      final timeParts = timeSlot.split(':');
+      if (parts.length < 3 || timeParts.length < 2) return false;
+      final start = DateTime(
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+        int.parse(parts[2]),
+        int.parse(timeParts[0]),
+        int.parse(timeParts[1]),
+      );
+      final now = DateTime.now();
+      return now.isAfter(start.subtract(const Duration(minutes: 5))) &&
+             now.isBefore(start.add(Duration(minutes: duration)));
+    } catch (_) {
+      return false;
+    }
+  }
+
   Color get statusColor {
     switch (status) {
       case 'accepted':  return const Color(0xFF16A34A);
