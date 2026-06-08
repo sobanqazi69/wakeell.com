@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/token_service.dart';
 import '../../../../core/utils/debug_logger.dart';
@@ -97,23 +98,29 @@ class AuthRepository {
     required String barLicense,
     String? phone,
     String? bio,
-    List<String>? specializations,
-    List<String>? languages,
-    double? hourlyRate,
+    XFile? photo,
   }) async {
     try {
-      await _api.post('/auth/register/lawyer', data: {
+      final fields = <String, dynamic>{
         'name': name.trim(),
         'email': email.trim().toLowerCase(),
         'password': password,
         'barLicense': barLicense.trim(),
         if (phone != null && phone.isNotEmpty) 'phone': phone,
         if (bio != null && bio.isNotEmpty) 'bio': bio,
-        'specializations': specializations ?? [],
-        'languages': languages ?? [],
-        if (hourlyRate != null) 'hourlyRate': hourlyRate, // ignore: use_null_aware_elements
-      });
+      };
 
+      dynamic payload;
+      if (photo != null) {
+        payload = FormData.fromMap({
+          ...fields,
+          'avatar': await MultipartFile.fromFile(photo.path, filename: photo.name),
+        });
+      } else {
+        payload = fields;
+      }
+
+      await _api.post('/auth/register/lawyer', data: payload);
       DebugLogger.log(_tag, 'Lawyer registration submitted: $email');
     } on DioException catch (e) {
       DebugLogger.error(_tag, 'Lawyer register DioException: ${e.message}');
@@ -140,9 +147,6 @@ class AuthRepository {
       return UserModel.fromJson(userJson);
     } on DioException catch (e) {
       DebugLogger.error(_tag, 'getMe DioException: ${e.message}');
-      if (e.response?.statusCode == 401) {
-        await _token.clearToken();
-      }
       return null;
     } catch (e) {
       DebugLogger.error(_tag, 'getMe error: $e');

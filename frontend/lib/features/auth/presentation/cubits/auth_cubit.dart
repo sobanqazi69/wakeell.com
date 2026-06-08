@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -90,9 +91,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String barLicense,
     String? phone,
     String? bio,
-    List<String>? specializations,
-    List<String>? languages,
-    double? hourlyRate,
+    XFile? photo,
   }) async {
     try {
       if (isClosed) return;
@@ -105,9 +104,7 @@ class AuthCubit extends Cubit<AuthState> {
         barLicense: barLicense,
         phone: phone,
         bio: bio,
-        specializations: specializations,
-        languages: languages,
-        hourlyRate: hourlyRate,
+        photo: photo,
       );
 
       if (!isClosed) emit(const AuthLawyerPending());

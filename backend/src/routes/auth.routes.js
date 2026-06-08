@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 router.post('/register', ctrl.register);
-router.post('/register/lawyer', ctrl.registerLawyer);
+router.post('/register/lawyer', upload.single('avatar'), ctrl.registerLawyer);
 router.post('/login', ctrl.login);
 router.get('/me', protect, ctrl.getMe);
 router.patch('/me', protect, ctrl.updateMe);

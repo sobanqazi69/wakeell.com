@@ -30,7 +30,7 @@ exports.register = async (req, res) => {
 
 exports.registerLawyer = async (req, res) => {
   try {
-    const { name, email, password, phone, barLicense, specializations, bio, languages, hourlyRate } = req.body;
+    const { name, email, password, phone, barLicense, bio } = req.body;
 
     if (!name || !email || !password || !barLicense) {
       return res.status(400).json({ message: 'Name, email, password and bar license are required' });
@@ -39,14 +39,16 @@ exports.registerLawyer = async (req, res) => {
     const existing = await User.findOne({ where: { email: email.toLowerCase() } });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
 
-    const user = await User.create({ name, email, password, role: 'lawyer', phone });
+    const avatarPath = req.file ? `/uploads/avatars/${req.file.filename}` : null;
+
+    const user = await User.create({ name, email, password, role: 'lawyer', phone, avatar: avatarPath });
     await Lawyer.create({
       userId: user.id,
       barLicense,
-      specializations: specializations || [],
+      specializations: [],
       bio: bio || '',
-      languages: languages || [],
-      hourlyRate: hourlyRate || 0,
+      languages: [],
+      hourlyRate: 0,
       status: 'pending',
     });
 

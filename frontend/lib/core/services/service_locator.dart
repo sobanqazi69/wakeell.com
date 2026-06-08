@@ -10,7 +10,7 @@ final getIt = GetIt.instance;
 
 void setupLocator() {
   getIt.registerLazySingleton<TokenService>(() => TokenService());
-  getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+  getIt.registerLazySingleton<ApiClient>(() => ApiClient(getIt<TokenService>()));
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepository(getIt<ApiClient>(), getIt<TokenService>()),
   );

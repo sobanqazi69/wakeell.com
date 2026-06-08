@@ -134,6 +134,7 @@ class _LawyerSignupScreenState extends State<LawyerSignupScreen> {
           barLicense: _barLicenseCtrl.text.trim(),
           phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
           bio: _summaryCtrl.text.trim().isEmpty ? null : _summaryCtrl.text.trim(),
+          photo: _profilePhoto,
         );
   }
 
