@@ -1,15 +1,14 @@
 const schedule = require('node-schedule');
 const { Op } = require('sequelize');
-const { Booking } = require('../models');
+const { Booking, Session } = require('../models');
 const notif = require('./notification.service');
 
 const _jobs = {}; // bookingId → [job, ...]
 
 const REMINDERS = [
-  { offsetMin: -60, flag: 'reminderSent60',  label: '1 hour' },
-  { offsetMin: -30, flag: 'reminderSent30',  label: '30 minutes' },
-  { offsetMin: -5,  flag: 'reminderSent5',   label: '5 minutes' },
-  { offsetMin:  0,  flag: 'reminderSentNow', label: 'now' },
+  { offsetMin: -30, flag: 'reminderSent30', label: '30 minutes' },
+  { offsetMin: -15, flag: 'reminderSent15', label: '15 minutes' },
+  { offsetMin: -5,  flag: 'reminderSent5',  label: '5 minutes' },
 ];
 
 function _sessionStart(date, timeSlot) {
@@ -35,11 +34,8 @@ function scheduleReminders(booking) {
         const b = await Booking.findByPk(id);
         if (!b || b.status !== 'accepted' || b[flag]) return;
 
-        const isNow  = offsetMin === 0;
-        const title  = isNow ? 'Your session is starting now!' : `Session in ${label}`;
-        const body   = isNow
-          ? 'Your consultation is starting. Tap to join.'
-          : `Your consultation starts in ${label}. Get ready!`;
+        const title = `Session in ${label}`;
+        const body  = `Your consultation starts in ${label}. Get ready to join!`;
         const data   = { bookingId: String(id), screen: 'bookings' };
 
         await Promise.all([
@@ -53,6 +49,31 @@ function scheduleReminders(booking) {
     });
 
     if (job) _jobs[id].push(job);
+  }
+
+  // Auto-cancel job: fires 30 min after start if no one joined
+  const cancelAt = new Date(start.getTime() + 30 * 60_000);
+  if (cancelAt.getTime() > Date.now()) {
+    const cancelJob = schedule.scheduleJob(`booking_${id}_autocancel`, cancelAt, async () => {
+      try {
+        const b = await Booking.findByPk(id);
+        if (!b || b.status !== 'accepted') return;
+
+        const session = await Session.findOne({ where: { bookingId: id } });
+        const anyoneJoined = session && (session.clientJoined || session.lawyerJoined);
+        if (anyoneJoined) return;
+
+        await b.update({ status: 'cancelled' });
+
+        await Promise.all([
+          notif.send(b.clientId, 'Booking Cancelled', 'Your session was cancelled — no one joined within 30 minutes.', 'booking_declined', { bookingId: String(id) }),
+          notif.send(b.lawyerId, 'Booking Cancelled', 'The session was cancelled — no one joined within 30 minutes.', 'booking_declined', { bookingId: String(id) }),
+        ]);
+      } catch (e) {
+        console.error(`[reminder.service] autocancel booking_${id} error:`, e.message);
+      }
+    });
+    if (cancelJob) _jobs[id].push(cancelJob);
   }
 }
 

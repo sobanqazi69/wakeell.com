@@ -17,10 +17,9 @@ const Booking = sequelize.define('Booking', {
     defaultValue: 'pending',
   },
   sessionRoom:    { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
-  reminderSent60:  { type: DataTypes.BOOLEAN, defaultValue: false },
   reminderSent30:  { type: DataTypes.BOOLEAN, defaultValue: false },
+  reminderSent15:  { type: DataTypes.BOOLEAN, defaultValue: false },
   reminderSent5:   { type: DataTypes.BOOLEAN, defaultValue: false },
-  reminderSentNow: { type: DataTypes.BOOLEAN, defaultValue: false },
   startedAt:      { type: DataTypes.DATE, allowNull: true, defaultValue: null },
   endedAt:        { type: DataTypes.DATE, allowNull: true, defaultValue: null },
 }, {

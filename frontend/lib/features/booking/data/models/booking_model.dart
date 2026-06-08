@@ -57,7 +57,7 @@ class BookingModel extends Equatable {
     }
   }
 
-  /// True when the session window is open: from 5 min before start until end.
+  /// True from 30 min before start until 30 min after start.
   bool get canJoin {
     if (status != 'accepted') return false;
     try {
@@ -72,8 +72,8 @@ class BookingModel extends Equatable {
         int.parse(timeParts[1]),
       );
       final now = DateTime.now();
-      return now.isAfter(start.subtract(const Duration(minutes: 5))) &&
-             now.isBefore(start.add(Duration(minutes: duration)));
+      return now.isAfter(start.subtract(const Duration(minutes: 30))) &&
+             now.isBefore(start.add(const Duration(minutes: 30)));
     } catch (_) {
       return false;
     }
