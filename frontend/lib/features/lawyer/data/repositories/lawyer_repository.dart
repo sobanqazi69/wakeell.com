@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/utils/debug_logger.dart';
@@ -104,15 +105,33 @@ class LawyerRepository {
       final res = await _api.get('/lawyers/$lawyerId/availability');
       final data = res.data as Map<String, dynamic>;
       final list = handleNullableListKey(data, 'availability') ?? [];
+      DebugLogger.log(_tag, 'getAvailability($lawyerId): raw list length = ${list.length}');
       final Map<String, List<String>> result = {};
       for (final item in list.whereType<Map<String, dynamic>>()) {
         final date = handleNullableStringKey(item, 'date') ?? '';
         if (date.isEmpty) continue;
-        // Backend stores slots as an array e.g. ["09:00", "10:00"]
-        final slots = handleNullableListKey(item, 'slots') ?? [];
-        final slotList = slots.whereType<String>().toList()..sort();
+
+        // MySQL JSON columns may arrive as a raw String — decode if needed
+        final slotsRaw = item['slots'];
+        List<dynamic> rawSlots;
+        if (slotsRaw is List) {
+          rawSlots = slotsRaw;
+        } else if (slotsRaw is String && slotsRaw.isNotEmpty) {
+          try {
+            final decoded = jsonDecode(slotsRaw);
+            rawSlots = decoded is List ? decoded : [];
+          } catch (_) {
+            rawSlots = [];
+          }
+        } else {
+          rawSlots = [];
+        }
+
+        final slotList = rawSlots.whereType<String>().toList()..sort();
+        DebugLogger.log(_tag, '  entry: date="$date" slotsRaw type=${slotsRaw.runtimeType} parsed=$slotList');
         if (slotList.isNotEmpty) result[date] = slotList;
       }
+      DebugLogger.log(_tag, 'getAvailability result: $result');
       return result;
     } on DioException catch (e) {
       DebugLogger.error(_tag, 'getAvailability: ${e.message}');

@@ -83,12 +83,12 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.cardBg,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Log Out', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.darkText)),
-        content: Text('Are you sure you want to log out?', style: GoogleFonts.outfit(fontSize: 14, color: AppColors.darkTextSub)),
+        title: Text('Log Out', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        content: Text('Are you sure you want to log out?', style: GoogleFonts.outfit(fontSize: 14, color: AppColors.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: AppColors.darkTextSub))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: AppColors.textSecondary))),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Log Out', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AppColors.error))),
         ],
       ),
@@ -110,7 +110,7 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
 
           return Scaffold(
             key: _scaffoldKey,
-            backgroundColor: AppColors.darkBg,
+            backgroundColor: AppColors.bg,
             drawer: _ClientDrawer(user: user, onLogout: _confirmLogout),
             body: SafeArea(
               child: Column(children: [
@@ -123,27 +123,29 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                       child: Container(
                         width: 40, height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.cardBg,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.darkBorder),
+                          border: Border.all(color: AppColors.fieldBorder),
+                          boxShadow: [AppColors.cardShadow(opacity: 0.04, blur: 8)],
                         ),
-                        child: const Icon(Icons.menu_rounded, size: 20, color: AppColors.darkText),
+                        child: const Icon(Icons.menu_rounded, size: 20, color: AppColors.textPrimary),
                       ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('FIND LEGAL HELP', style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.cyan, letterSpacing: 1.5)),
+                      Text('Find Legal Help', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
                       Text(user?.name.split(' ').first ?? 'Welcome',
-                        style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.darkText)),
+                        style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     ])),
                     Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.cardBg,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.darkBorder),
+                        border: Border.all(color: AppColors.fieldBorder),
+                        boxShadow: [AppColors.cardShadow(opacity: 0.04, blur: 8)],
                       ),
-                      child: const Icon(Icons.notifications_outlined, size: 20, color: AppColors.darkTextSub),
+                      child: const Icon(Icons.notifications_outlined, size: 20, color: AppColors.textSecondary),
                     ),
                   ]),
                 ),
@@ -154,9 +156,10 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.cardBg,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.darkBorder),
+                      border: Border.all(color: AppColors.fieldBorder),
+                      boxShadow: [AppColors.cardShadow(opacity: 0.04, blur: 10)],
                     ),
                     child: TextField(
                       controller: _searchCtrl,
@@ -164,15 +167,15 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                         setState(() {});
                         context.read<LawyerListCubit>().onSearchChanged(v);
                       },
-                      style: GoogleFonts.outfit(fontSize: 14, color: AppColors.darkText),
+                      style: GoogleFonts.outfit(fontSize: 14, color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search by name or specialization…',
-                        hintStyle: GoogleFonts.outfit(fontSize: 13, color: AppColors.darkTextHint),
-                        prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.cyan),
+                        hintStyle: GoogleFonts.outfit(fontSize: 13, color: AppColors.textHint),
+                        prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.textSecondary),
                         suffixIcon: _searchCtrl.text.isNotEmpty
                             ? GestureDetector(
                                 onTap: () { _searchCtrl.clear(); context.read<LawyerListCubit>().onSearchChanged(''); setState(() {}); },
-                                child: const Icon(Icons.cancel_outlined, size: 18, color: AppColors.darkTextHint))
+                                child: const Icon(Icons.cancel_outlined, size: 18, color: AppColors.textSecondary))
                             : null,
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 13),
@@ -202,16 +205,13 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                               duration: const Duration(milliseconds: 160),
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
-                                color: on ? AppColors.cyan : AppColors.cardBg,
+                                color: on ? AppColors.navy : AppColors.surface,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: on ? AppColors.cyan : AppColors.darkBorder,
-                                  width: on ? 0 : 1,
-                                ),
+                                border: Border.all(color: on ? AppColors.navy : AppColors.fieldBorder),
                               ),
                               child: Center(child: Text(c, style: GoogleFonts.outfit(
                                 fontSize: 12, fontWeight: FontWeight.w600,
-                                color: on ? AppColors.darkBg : AppColors.darkTextSub))),
+                                color: on ? Colors.white : AppColors.textSecondary))),
                             ),
                           );
                         },
@@ -261,18 +261,16 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                 ),
                 const SizedBox(height: 14),
 
-                // ── Lawyers count header ────────────────────────────────
+                // ── Lawyers count ───────────────────────────────────────
                 BlocBuilder<LawyerListCubit, LawyerListState>(
                   builder: (context, state) {
                     if (state is! LawyerListLoaded) return const SizedBox.shrink();
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(children: [
-                        Container(width: 3, height: 14, decoration: BoxDecoration(color: AppColors.cyan, borderRadius: BorderRadius.circular(2))),
-                        const SizedBox(width: 8),
                         Text(
                           '${state.lawyers.length} lawyer${state.lawyers.length == 1 ? '' : 's'} available',
-                          style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.darkTextSub),
+                          style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                         ),
                       ]),
                     );
@@ -285,7 +283,7 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                   child: BlocBuilder<LawyerListCubit, LawyerListState>(
                     builder: (context, state) {
                       if (state is LawyerListLoading || state is LawyerListInitial) {
-                        return const Center(child: CircularProgressIndicator(color: AppColors.cyan, strokeWidth: 2));
+                        return const Center(child: CircularProgressIndicator(color: AppColors.navy, strokeWidth: 2));
                       }
                       if (state is LawyerListError) {
                         return _ErrorView(message: state.message, onRetry: () => context.read<LawyerListCubit>().refresh());
@@ -295,8 +293,7 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                           return _EmptyView(search: state.search, sort: state.sort);
                         }
                         return RefreshIndicator(
-                          color: AppColors.cyan,
-                          backgroundColor: AppColors.cardBg,
+                          color: AppColors.navy,
                           onRefresh: () => context.read<LawyerListCubit>().refresh(),
                           child: ListView.separated(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
@@ -332,45 +329,41 @@ class _ClientDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.cardBg,
+      backgroundColor: AppColors.surface,
       child: Column(children: [
         Container(
           width: double.infinity,
           padding: EdgeInsets.fromLTRB(24, MediaQuery.of(context).padding.top + 24, 24, 28),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.purple, Color(0xFF1A1D3A)],
+              colors: [AppColors.navy, AppColors.navyMid],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
-              width: 64, height: 64,
+              width: 60, height: 60,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.cyan, AppColors.purple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Colors.white.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
               ),
               child: Center(child: Text(
                 _initials(user?.name ?? ''),
                 style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
               )),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(user?.name ?? '', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
             const SizedBox(height: 2),
             Text(user?.email ?? '', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
             if (user?.location != null) ...[
               const SizedBox(height: 6),
               Row(children: [
-                const Icon(Icons.location_on_outlined, size: 13, color: AppColors.cyan),
+                const Icon(Icons.location_on_outlined, size: 13, color: Colors.white54),
                 const SizedBox(width: 4),
-                Text(user!.location!, style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
+                Text(user!.location!, style: GoogleFonts.outfit(fontSize: 12, color: Colors.white54)),
               ]),
             ],
           ]),
@@ -389,7 +382,7 @@ class _ClientDrawer extends StatelessWidget {
           onTap: () { Navigator.pop(context); }),
 
         const Spacer(),
-        Container(height: 1, margin: const EdgeInsets.symmetric(horizontal: 20), color: AppColors.darkBorder),
+        const Divider(indent: 20, endIndent: 20, color: AppColors.fieldBorder),
         _DrawerTile(
           icon: Icons.logout_rounded,
           label: 'Log Out',
@@ -414,12 +407,12 @@ class _DrawerTile extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _DrawerTile({required this.icon, required this.label, this.color = AppColors.darkText, required this.onTap});
+  const _DrawerTile({required this.icon, required this.label, this.color = AppColors.textPrimary, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, size: 20, color: color == AppColors.darkText ? AppColors.darkTextSub : color),
+      leading: Icon(icon, size: 20, color: color == AppColors.textPrimary ? AppColors.textSecondary : color),
       title: Text(label, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w500, color: color)),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -443,10 +436,10 @@ class _LawyerCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardBg,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.darkBorder),
-          boxShadow: [AppColors.darkCardShadow(opacity: 0.3, blur: 20)],
+          border: Border.all(color: AppColors.fieldBorder),
+          boxShadow: [AppColors.cardShadow(opacity: 0.05, blur: 16)],
         ),
         child: Column(children: [
           Padding(
@@ -457,7 +450,7 @@ class _LawyerCard extends StatelessWidget {
                 width: 54, height: 54,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.purple, Color(0xFF0090B8)],
+                    colors: [AppColors.navy, AppColors.navyMid],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -482,19 +475,18 @@ class _LawyerCard extends StatelessWidget {
               // ── Info ──────────────────────────────────────────────────
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  // Name + verified
                   Row(children: [
                     Expanded(child: Text(lawyer.name,
-                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.darkText),
+                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                       overflow: TextOverflow.ellipsis)),
                     if (lawyer.barLicense.isNotEmpty) ...[
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.12),
+                          color: AppColors.success.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                          border: Border.all(color: AppColors.success.withValues(alpha: 0.25)),
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           const Icon(Icons.verified_rounded, size: 10, color: AppColors.success),
@@ -506,26 +498,24 @@ class _LawyerCard extends StatelessWidget {
                   ]),
                   const SizedBox(height: 5),
 
-                  // Location + experience
                   Row(children: [
                     if (lawyer.location != null) ...[
-                      const Icon(Icons.location_on_outlined, size: 12, color: AppColors.cyan),
+                      const Icon(Icons.location_on_outlined, size: 12, color: AppColors.textSecondary),
                       const SizedBox(width: 3),
                       Flexible(child: Text(lawyer.location!,
-                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.darkTextSub),
+                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
                         overflow: TextOverflow.ellipsis)),
                     ],
                     if (lawyer.location != null && lawyer.experience > 0) ...[
                       const SizedBox(width: 6),
-                      Container(width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.darkTextHint, shape: BoxShape.circle)),
+                      Container(width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.textHint, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
                     ],
                     if (lawyer.experience > 0)
-                      Text('${lawyer.experience} yrs',
-                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.darkTextSub)),
+                      Text('${lawyer.experience} yrs exp',
+                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary)),
                   ]),
 
-                  // Specialization chips
                   if (lawyer.specializations.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Wrap(spacing: 5, runSpacing: 4, children: [
@@ -542,26 +532,26 @@ class _LawyerCard extends StatelessWidget {
           // ── Footer ────────────────────────────────────────────────────
           Container(
             decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.darkBorder)),
+              border: Border(top: BorderSide(color: AppColors.divider)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             child: Row(children: [
               if (lawyer.rating > 0) ...[
-                const Icon(Icons.star_rounded, size: 14, color: AppColors.gold),
+                const Icon(Icons.star_rounded, size: 14, color: Color(0xFFD97706)),
                 const SizedBox(width: 3),
                 Text(lawyer.ratingDisplay,
-                  style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.darkText)),
+                  style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                 const SizedBox(width: 4),
                 Text('(${lawyer.reviewCount})',
-                  style: GoogleFonts.outfit(fontSize: 12, color: AppColors.darkTextHint)),
+                  style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary)),
               ] else
                 Text('No reviews yet',
-                  style: GoogleFonts.outfit(fontSize: 12, color: AppColors.darkTextHint)),
+                  style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textHint)),
               const Spacer(),
               Text(lawyer.formattedRate,
-                style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.gold)),
+                style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navy)),
               const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: AppColors.darkTextHint),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: AppColors.textHint),
             ]),
           ),
         ]),
@@ -579,12 +569,11 @@ class _SpecChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      color: muted ? AppColors.darkBg : AppColors.cyan.withValues(alpha: 0.08),
+      color: muted ? AppColors.bg : AppColors.navy.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(5),
-      border: Border.all(color: muted ? AppColors.darkBorder : AppColors.cyan.withValues(alpha: 0.2)),
     ),
     child: Text(label, style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w500,
-      color: muted ? AppColors.darkTextHint : AppColors.cyan)),
+      color: muted ? AppColors.textHint : AppColors.navy)),
   );
 }
 
@@ -607,15 +596,15 @@ class _SortChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: on ? AppColors.purple : AppColors.cardBg,
+          color: on ? AppColors.navy : AppColors.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: on ? AppColors.purple : AppColors.darkBorder),
+          border: Border.all(color: on ? AppColors.navy : AppColors.fieldBorder),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 13, color: on ? Colors.white : AppColors.darkTextSub),
+          Icon(icon, size: 13, color: on ? Colors.white : AppColors.textSecondary),
           const SizedBox(width: 5),
           Text(label, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600,
-            color: on ? Colors.white : AppColors.darkTextSub)),
+            color: on ? Colors.white : AppColors.textSecondary)),
         ]),
       ),
     );
@@ -634,20 +623,20 @@ class _EmptyView extends StatelessWidget {
     padding: const EdgeInsets.all(32),
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
-        width: 72, height: 72,
-        decoration: BoxDecoration(color: AppColors.cardBg, shape: BoxShape.circle, border: Border.all(color: AppColors.darkBorder)),
-        child: const Icon(Icons.search_off_rounded, size: 32, color: AppColors.darkTextHint),
+        width: 64, height: 64,
+        decoration: BoxDecoration(color: AppColors.navy.withValues(alpha: 0.06), shape: BoxShape.circle),
+        child: const Icon(Icons.search_off_rounded, size: 30, color: AppColors.textHint),
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 16),
       Text(
         sort == 'near_me' ? 'No lawyers found near you' : search.isEmpty ? 'No lawyers found' : 'No results for "$search"',
         textAlign: TextAlign.center,
-        style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.darkText),
+        style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 6),
       Text('Try a different name, category, or filter.',
         textAlign: TextAlign.center,
-        style: GoogleFonts.outfit(fontSize: 13, color: AppColors.darkTextSub)),
+        style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary)),
     ]),
   ));
 }
@@ -661,17 +650,13 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) => Center(child: Padding(
     padding: const EdgeInsets.all(32),
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Icon(Icons.error_outline_rounded, size: 44, color: AppColors.darkTextHint),
+      const Icon(Icons.error_outline_rounded, size: 44, color: AppColors.textHint),
       const SizedBox(height: 12),
-      Text(message, textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 13, color: AppColors.darkTextSub)),
+      Text(message, textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary)),
       const SizedBox(height: 16),
       GestureDetector(onTap: onRetry, child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.purple,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: AppColors.purple.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6))],
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(8)),
         child: Text('Retry', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
       )),
     ]),

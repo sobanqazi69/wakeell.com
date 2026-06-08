@@ -23,11 +23,25 @@ class ApiClient {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-        DebugLogger.log(_tag, '${options.method} ${options.path}');
+        DebugLogger.log(_tag, '>>> ${options.method} ${options.baseUrl}${options.path}');
+        if (options.queryParameters.isNotEmpty) {
+          DebugLogger.log(_tag, '    PARAMS: ${options.queryParameters}');
+        }
+        if (options.data != null) {
+          DebugLogger.log(_tag, '    BODY:   ${options.data}');
+        }
         return handler.next(options);
       },
+      onResponse: (response, handler) {
+        DebugLogger.log(_tag, '<<< ${response.statusCode} ${response.requestOptions.path}');
+        DebugLogger.log(_tag, '    DATA:   ${response.data}');
+        return handler.next(response);
+      },
       onError: (error, handler) async {
-        DebugLogger.error(_tag, error.message ?? 'Unknown error');
+        DebugLogger.error(_tag, '!!! ${error.response?.statusCode} ${error.requestOptions.path} — ${error.message}');
+        if (error.response?.data != null) {
+          DebugLogger.error(_tag, '    ERR DATA: ${error.response?.data}');
+        }
         if (error.response?.statusCode == 401) {
           await _tokenService.clearToken();
           DebugLogger.log(_tag, 'Token cleared on 401');

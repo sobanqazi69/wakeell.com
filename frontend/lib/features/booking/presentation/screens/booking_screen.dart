@@ -91,7 +91,10 @@ class _BookingScreenState extends State<BookingScreen> {
       return const Center(child: CircularProgressIndicator(color: AppColors.navy, strokeWidth: 2));
     }
     if (state is ClientBookingNoSlots) {
-      return _NoSlotsView(onBack: () => Navigator.pop(context));
+      return _NoSlotsView(
+        onBack: () => Navigator.pop(context),
+        onRetry: () => context.read<ClientBookingCubit>().loadAvailability(_lawyerId),
+      );
     }
     if (state is ClientBookingError && _lastReady == null) {
       return _RetryView(
@@ -405,7 +408,8 @@ class _TypeTile extends StatelessWidget {
 
 class _NoSlotsView extends StatelessWidget {
   final VoidCallback onBack;
-  const _NoSlotsView({required this.onBack});
+  final VoidCallback onRetry;
+  const _NoSlotsView({required this.onBack, required this.onRetry});
 
   @override
   Widget build(BuildContext context) => Center(child: Padding(
@@ -424,14 +428,28 @@ class _NoSlotsView extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary, height: 1.5)),
       const SizedBox(height: 24),
-      GestureDetector(
-        onTap: onBack,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(10)),
-          child: Text('Go Back', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        GestureDetector(
+          onTap: onBack,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.fieldBorder),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text('Go Back', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          ),
         ),
-      ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: onRetry,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(10)),
+            child: Text('Try Again', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+          ),
+        ),
+      ]),
     ]),
   ));
 }
