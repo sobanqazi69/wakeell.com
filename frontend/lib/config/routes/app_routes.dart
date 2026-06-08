@@ -15,7 +15,8 @@ class AppRoutes {
   static const String booking = '/booking';
   static const String bookings = '/bookings';
   static const String clientBookings = '/client/bookings';
-  static const String session = '/session';
+  static const String session       = '/session';
+  static const String notifications = '/notifications';
   static const String profile = '/profile';
   static const String adminDashboard = '/admin';
 }

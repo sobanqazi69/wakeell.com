@@ -10,6 +10,8 @@ import '../../../../core/services/service_locator.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../../auth/presentation/cubits/auth_state.dart';
+import '../../../notifications/presentation/cubits/notifications_cubit.dart';
+import '../../../notifications/presentation/cubits/notifications_state.dart';
 import '../../../lawyer/data/models/lawyer_model.dart';
 import '../../../lawyer/data/repositories/lawyer_repository.dart';
 import '../../../lawyer/presentation/cubits/lawyer_list_cubit.dart';
@@ -137,15 +139,37 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
                       Text(user?.name.split(' ').first ?? 'Welcome',
                         style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     ])),
-                    Container(
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.fieldBorder),
-                        boxShadow: [AppColors.cardShadow(opacity: 0.04, blur: 8)],
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, AppRoutes.notifications),
+                      child: BlocBuilder<NotificationsCubit, NotificationsState>(
+                        builder: (ctx, state) {
+                          final unread = state is NotificationsLoaded ? state.unreadCount : 0;
+                          return Stack(clipBehavior: Clip.none, children: [
+                            Container(
+                              width: 40, height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.fieldBorder),
+                                boxShadow: [AppColors.cardShadow(opacity: 0.04, blur: 8)],
+                              ),
+                              child: const Icon(Icons.notifications_outlined, size: 20, color: AppColors.textSecondary),
+                            ),
+                            if (unread > 0)
+                              Positioned(
+                                top: -3, right: -3,
+                                child: Container(
+                                  width: 16, height: 16,
+                                  decoration: const BoxDecoration(color: Color(0xFFFF3B30), shape: BoxShape.circle),
+                                  child: Center(child: Text(
+                                    unread > 9 ? '9+' : '$unread',
+                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                                  )),
+                                ),
+                              ),
+                          ]);
+                        },
                       ),
-                      child: const Icon(Icons.notifications_outlined, size: 20, color: AppColors.textSecondary),
                     ),
                   ]),
                 ),

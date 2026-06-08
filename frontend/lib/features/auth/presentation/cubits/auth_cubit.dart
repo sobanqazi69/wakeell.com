@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/services/push_notification_service.dart';
+import '../../../../core/services/service_locator.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -25,6 +28,7 @@ class AuthCubit extends Cubit<AuthState> {
       if (user != null) {
         currentUser = user;
         emit(AuthAuthenticated(user));
+        PushNotificationService.init(getIt<ApiClient>());
       } else {
         emit(const AuthUnauthenticated());
       }
@@ -41,8 +45,10 @@ class AuthCubit extends Cubit<AuthState> {
 
       final user = await _repo.login(email: email, password: password);
       currentUser = user;
-
       if (!isClosed) emit(AuthAuthenticated(user));
+
+      // Initialize push notifications now that we have a valid auth token
+      PushNotificationService.init(getIt<ApiClient>());
     } on AuthException catch (e) {
       DebugLogger.error(_tag, 'login AuthException: ${e.message}');
       if (!isClosed) emit(AuthError(e.message));
@@ -73,8 +79,9 @@ class AuthCubit extends Cubit<AuthState> {
         jurisdiction: jurisdiction,
       );
       currentUser = user;
-
       if (!isClosed) emit(AuthAuthenticated(user));
+
+      PushNotificationService.init(getIt<ApiClient>());
     } on AuthException catch (e) {
       DebugLogger.error(_tag, 'registerClient AuthException: ${e.message}');
       if (!isClosed) emit(AuthError(e.message));

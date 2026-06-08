@@ -1,9 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'config/theme/app_theme.dart';
 import 'config/routes/app_routes.dart';
 import 'core/services/service_locator.dart';
+import 'core/services/push_notification_service.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/presentation/cubits/auth_cubit.dart';
 import 'features/admin/data/repositories/admin_repository.dart';
@@ -24,7 +27,6 @@ import 'features/lawyer/presentation/screens/lawyers_list_screen.dart';
 import 'features/lawyer/presentation/screens/lawyer_detail_screen.dart';
 import 'features/lawyer/presentation/screens/lawyer_profile_edit_screen.dart';
 import 'features/lawyer/presentation/screens/lawyer_availability_screen.dart';
-import 'features/lawyer/presentation/screens/lawyer_notifications_screen.dart';
 import 'features/booking/data/repositories/booking_repository.dart';
 import 'features/booking/presentation/cubits/client_booking_cubit.dart';
 import 'features/booking/presentation/cubits/client_bookings_cubit.dart';
@@ -33,6 +35,11 @@ import 'features/booking/presentation/screens/client_bookings_screen.dart';
 import 'features/session/data/repositories/session_repository.dart';
 import 'features/session/presentation/cubits/session_cubit.dart';
 import 'features/session/presentation/screens/session_screen.dart';
+import 'features/notifications/data/repositories/notification_repository.dart';
+import 'features/notifications/presentation/cubits/notifications_cubit.dart';
+import 'features/notifications/presentation/screens/notifications_screen.dart';
+
+final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +51,15 @@ void main() async {
     ),
   );
 
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   setupLocator();
+
+  // Wire notification tap → navigate to notifications screen
+  PushNotificationService.notificationNavCallback = () {
+    navigatorKey.currentState?.pushNamed(AppRoutes.notifications);
+  };
 
   runApp(const WakeellApp());
 }
@@ -58,11 +73,15 @@ class WakeellApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthCubit>(create: (_) => AuthCubit(getIt<AuthRepository>())),
         BlocProvider<AdminCubit>(create: (_) => AdminCubit(getIt<AdminRepository>())),
+        BlocProvider<NotificationsCubit>(
+          create: (_) => NotificationsCubit(getIt<NotificationRepository>()),
+        ),
       ],
       child: MaterialApp(
         title: 'Wakeell',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        navigatorKey: navigatorKey,
         initialRoute: AppRoutes.splash,
         routes: {
           AppRoutes.splash:         (_) => const SplashScreen(),
@@ -88,7 +107,8 @@ class WakeellApp extends StatelessWidget {
             create: (_) => LawyerAvailabilityCubit(getIt<LawyerRepository>()),
             child: const LawyerAvailabilityScreen(),
           ),
-          AppRoutes.lawyerNotifications: (_) => const LawyerNotificationsScreen(),
+          AppRoutes.lawyerNotifications: (_) => const NotificationsScreen(),
+          AppRoutes.notifications:       (_) => const NotificationsScreen(),
           AppRoutes.booking: (_) => BlocProvider(
             create: (_) => ClientBookingCubit(getIt<BookingRepository>(), getIt<LawyerRepository>()),
             child: const BookingScreen(),

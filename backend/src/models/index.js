@@ -4,6 +4,7 @@ const LawyerAvailability = require('./LawyerAvailability');
 const Booking          = require('./Booking');
 const Session          = require('./Session');
 const Review           = require('./Review');
+const Notification     = require('./Notification');
 
 // ── User ↔ Lawyer ─────────────────────────────────────────────────────────────
 User.hasOne(Lawyer, { foreignKey: 'userId', as: 'lawyerProfile', onDelete: 'CASCADE' });
@@ -40,4 +41,8 @@ Review.belongsTo(User, { foreignKey: 'clientId', as: 'client' });
 User.hasMany(Review, { foreignKey: 'lawyerId', as: 'lawyerReviews' });
 Review.belongsTo(User, { foreignKey: 'lawyerId', as: 'lawyerUser' });
 
-module.exports = { User, Lawyer, LawyerAvailability, Booking, Session, Review };
+// ── Notification ↔ User ───────────────────────────────────────────────────────
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications', onDelete: 'CASCADE' });
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+module.exports = { User, Lawyer, LawyerAvailability, Booking, Session, Review, Notification };

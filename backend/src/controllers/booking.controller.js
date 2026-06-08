@@ -1,4 +1,6 @@
 const { Booking, Lawyer, User, LawyerAvailability } = require('../models');
+const notif    = require('../services/notification.service');
+const reminder = require('../services/reminder.service');
 
 exports.createBooking = async (req, res) => {
   try {
@@ -43,6 +45,16 @@ exports.createBooking = async (req, res) => {
       category,
       caseBrief: caseBrief || '',
     });
+
+    // Notify lawyer
+    const client = await User.findByPk(req.user.id, { attributes: ['name'] });
+    notif.send(
+      lawyerProfile.userId,
+      'New Booking Request',
+      `${client?.name ?? 'A client'} has requested a ${category} consultation on ${date} at ${timeSlot}.`,
+      'booking_new',
+      { bookingId: String(booking.id), screen: 'bookings' }
+    );
 
     return res.status(201).json({ booking });
   } catch (err) {
@@ -117,6 +129,31 @@ exports.respondToBooking = async (req, res) => {
     }
 
     await booking.update({ status });
+
+    if (status === 'accepted') {
+      // Notify client
+      const lawyer = await User.findByPk(req.user.id, { attributes: ['name'] });
+      notif.send(
+        booking.clientId,
+        'Booking Accepted!',
+        `${lawyer?.name ?? 'Your lawyer'} has accepted your consultation on ${booking.date} at ${booking.timeSlot}.`,
+        'booking_accepted',
+        { bookingId: String(booking.id), screen: 'bookings' }
+      );
+      // Schedule reminders for both parties
+      reminder.scheduleReminders(booking);
+    } else {
+      // Notify client of decline
+      const lawyer = await User.findByPk(req.user.id, { attributes: ['name'] });
+      notif.send(
+        booking.clientId,
+        'Booking Declined',
+        `${lawyer?.name ?? 'The lawyer'} is unable to accept your consultation on ${booking.date}.`,
+        'booking_declined',
+        { bookingId: String(booking.id), screen: 'bookings' }
+      );
+    }
+
     return res.json({ booking });
   } catch (err) {
     console.error('[booking.respondToBooking]', err);

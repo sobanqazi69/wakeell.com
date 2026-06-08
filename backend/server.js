@@ -12,13 +12,14 @@ require('./src/models'); // registers all models + associations
 
 const errorHandler = require('./src/middleware/errorHandler');
 
-const authRoutes    = require('./src/routes/auth.routes');
-const lawyerRoutes  = require('./src/routes/lawyer.routes');
-const bookingRoutes = require('./src/routes/booking.routes');
-const sessionRoutes = require('./src/routes/session.routes');
-const reviewRoutes  = require('./src/routes/review.routes');
-const adminRoutes   = require('./src/routes/admin.routes');
-const citiesRoutes  = require('./src/routes/cities.routes');
+const authRoutes         = require('./src/routes/auth.routes');
+const lawyerRoutes       = require('./src/routes/lawyer.routes');
+const bookingRoutes      = require('./src/routes/booking.routes');
+const sessionRoutes      = require('./src/routes/session.routes');
+const reviewRoutes       = require('./src/routes/review.routes');
+const adminRoutes        = require('./src/routes/admin.routes');
+const citiesRoutes       = require('./src/routes/cities.routes');
+const notificationRoutes = require('./src/routes/notification.routes');
 
 const socketHandler = require('./src/socket');
 
@@ -34,13 +35,14 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/api/auth',    authRoutes);
-app.use('/api/lawyers', lawyerRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/reviews',  reviewRoutes);
-app.use('/api/admin',    adminRoutes);
-app.use('/api/cities',   citiesRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/lawyers',       lawyerRoutes);
+app.use('/api/bookings',      bookingRoutes);
+app.use('/api/sessions',      sessionRoutes);
+app.use('/api/reviews',       reviewRoutes);
+app.use('/api/admin',         adminRoutes);
+app.use('/api/cities',        citiesRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', db: 'mysql' }));
 
@@ -60,6 +62,8 @@ sequelize
   })
   .then(() => {
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    // Re-schedule reminder jobs for all upcoming accepted bookings
+    require('./src/services/reminder.service').rescheduleAllOnBoot();
   })
   .catch((err) => {
     console.error('Unable to connect to MySQL:', err);
