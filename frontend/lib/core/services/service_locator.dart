@@ -5,6 +5,7 @@ import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/admin/data/repositories/admin_repository.dart';
 import '../../features/lawyer/data/repositories/lawyer_repository.dart';
 import '../../features/booking/data/repositories/booking_repository.dart';
+import '../../features/session/data/repositories/session_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -22,5 +23,8 @@ void setupLocator() {
   );
   getIt.registerLazySingleton<BookingRepository>(
     () => BookingRepository(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<SessionRepository>(
+    () => SessionRepository(getIt<ApiClient>()),
   );
 }

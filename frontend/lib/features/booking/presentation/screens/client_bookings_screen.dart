@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../config/routes/app_routes.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../data/models/booking_model.dart';
 import '../cubits/client_bookings_cubit.dart';
@@ -195,13 +196,11 @@ class _BookingCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: GestureDetector(
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Video session coming soon.',
-                  style: GoogleFonts.outfit(color: Colors.white)),
-                backgroundColor: AppColors.navy,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              )),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.session, arguments: {
+                'bookingId':      booking.id,
+                'otherPartyName': booking.lawyerName ?? 'Lawyer',
+                'sessionType':    booking.sessionType,
+              }),
               child: Container(
                 height: 40,
                 decoration: BoxDecoration(

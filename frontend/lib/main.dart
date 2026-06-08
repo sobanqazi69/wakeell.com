@@ -30,6 +30,9 @@ import 'features/booking/presentation/cubits/client_booking_cubit.dart';
 import 'features/booking/presentation/cubits/client_bookings_cubit.dart';
 import 'features/booking/presentation/screens/booking_screen.dart';
 import 'features/booking/presentation/screens/client_bookings_screen.dart';
+import 'features/session/data/repositories/session_repository.dart';
+import 'features/session/presentation/cubits/session_cubit.dart';
+import 'features/session/presentation/screens/session_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,6 +97,17 @@ class WakeellApp extends StatelessWidget {
             create: (_) => ClientBookingsCubit(getIt<BookingRepository>())..load(),
             child: const ClientBookingsScreen(),
           ),
+          AppRoutes.session: (ctx) {
+            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+            return BlocProvider(
+              create: (_) => SessionCubit(getIt<SessionRepository>()),
+              child: SessionScreen(
+                bookingId:      args['bookingId'] as int,
+                otherPartyName: args['otherPartyName'] as String,
+                sessionType:    args['sessionType'] as String? ?? 'video',
+              ),
+            );
+          },
         },
       ),
     );

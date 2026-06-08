@@ -1,0 +1,31 @@
+import 'package:dio/dio.dart';
+import '../../../../../core/network/api_client.dart';
+import '../../../../../core/utils/debug_logger.dart';
+import '../models/session_token_model.dart';
+
+class SessionException implements Exception {
+  final String message;
+  const SessionException(this.message);
+}
+
+class SessionRepository {
+  static const _tag = 'SessionRepository';
+  final ApiClient _api;
+
+  const SessionRepository(this._api);
+
+  Future<SessionTokenModel> joinToken(int bookingId) async {
+    try {
+      final res = await _api.post('/sessions/$bookingId/token');
+      final data = res.data as Map<String, dynamic>;
+      return SessionTokenModel.fromJson(data);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'joinToken: ${e.message}');
+      final msg = (e.response?.data is Map) ? e.response?.data['message'] : null;
+      throw SessionException(msg ?? 'Failed to join session');
+    } catch (e) {
+      DebugLogger.error(_tag, 'joinToken unexpected: $e');
+      throw const SessionException('Failed to join session');
+    }
+  }
+}

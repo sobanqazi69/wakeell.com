@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../config/routes/app_routes.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../booking/data/models/booking_model.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
@@ -146,10 +147,22 @@ class _BookingCard extends StatelessWidget {
         if (booking.status == 'pending') ...[
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _Btn(label: 'Confirm', color: AppColors.success, onTap: onConfirm)),
+            Expanded(child: _Btn(label: 'Accept', color: AppColors.success, onTap: onConfirm)),
             const SizedBox(width: 10),
             Expanded(child: _Btn(label: 'Decline', color: AppColors.error, filled: false, onTap: onCancel)),
           ]),
+        ],
+        if (booking.status == 'accepted') ...[
+          const SizedBox(height: 12),
+          Builder(builder: (ctx) => _Btn(
+            label: 'Join Session',
+            color: AppColors.navy,
+            onTap: () => Navigator.pushNamed(ctx, AppRoutes.session, arguments: {
+              'bookingId':      booking.id,
+              'otherPartyName': booking.clientName ?? 'Client',
+              'sessionType':    booking.sessionType,
+            }),
+          )),
         ],
       ]),
     );
