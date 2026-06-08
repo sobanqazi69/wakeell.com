@@ -88,8 +88,38 @@ async function rescheduleAllOnBoot() {
     const bookings = await Booking.findAll({
       where: { status: 'accepted', date: { [Op.gte]: today } },
     });
-    bookings.forEach(scheduleReminders);
-    console.log(`[reminder.service] rescheduled ${bookings.length} bookings on boot`);
+
+    const now = Date.now();
+    let cancelled = 0;
+
+    for (const b of bookings) {
+      const start    = _sessionStart(b.date, b.timeSlot);
+      const cancelAt = new Date(start.getTime() + 30 * 60_000);
+
+      if (cancelAt.getTime() <= now) {
+        // Window already passed — complete if joined, cancel if not
+        const session = await Session.findOne({ where: { bookingId: b.id } });
+        const anyoneJoined = session && (session.clientJoined || session.lawyerJoined);
+        if (anyoneJoined) {
+          await b.update({ status: 'completed' });
+          if (session.status !== 'ended') {
+            await session.update({ status: 'ended', endedAt: session.endedAt || new Date() });
+          }
+          cancelled++; // reuse counter for logging
+        } else {
+          await b.update({ status: 'cancelled' });
+          await Promise.all([
+            notif.send(b.clientId, 'Booking Cancelled', 'Your session was cancelled — no one joined within 30 minutes.', 'booking_declined', { bookingId: String(b.id) }),
+            notif.send(b.lawyerId, 'Booking Cancelled', 'The session was cancelled — no one joined within 30 minutes.', 'booking_declined', { bookingId: String(b.id) }),
+          ]).catch(() => {});
+          cancelled++;
+        }
+      } else {
+        scheduleReminders(b);
+      }
+    }
+
+    console.log(`[reminder.service] rescheduled ${bookings.length - cancelled} bookings, resolved ${cancelled} expired on boot`);
   } catch (e) {
     console.error('[reminder.service] rescheduleAllOnBoot:', e.message);
   }
