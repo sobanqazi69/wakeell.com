@@ -3,6 +3,7 @@ const ctrl = require('../controllers/admin.controller');
 const { protect, restrictTo } = require('../middleware/auth');
 
 router.use(protect, restrictTo('admin'));
+router.get('/stats',           ctrl.getStats);
 router.get('/lawyers/pending', ctrl.getPendingLawyers);
 router.patch('/lawyers/:id/verify', ctrl.verifyLawyer);
 router.get('/users', ctrl.getUsers);

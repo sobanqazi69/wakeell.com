@@ -1,5 +1,23 @@
 const { User, Lawyer } = require('../models');
 
+exports.getStats = async (req, res) => {
+  try {
+    const [totalUsers, totalClients, totalLawyers, pendingLawyers, approvedLawyers, rejectedLawyers] =
+      await Promise.all([
+        User.count(),
+        User.count({ where: { role: 'client' } }),
+        User.count({ where: { role: 'lawyer' } }),
+        Lawyer.count({ where: { status: 'pending' } }),
+        Lawyer.count({ where: { status: 'approved' } }),
+        Lawyer.count({ where: { status: 'rejected' } }),
+      ]);
+    return res.json({ totalUsers, totalClients, totalLawyers, pendingLawyers, approvedLawyers, rejectedLawyers });
+  } catch (err) {
+    console.error('[admin.getStats]', err);
+    return res.status(500).json({ message: 'Failed to fetch stats' });
+  }
+};
+
 exports.getPendingLawyers = async (req, res) => {
   try {
     const lawyers = await Lawyer.findAll({
