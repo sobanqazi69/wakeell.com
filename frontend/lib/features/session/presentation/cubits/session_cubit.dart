@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../data/repositories/session_repository.dart';
 import 'session_state.dart';
@@ -37,22 +38,30 @@ class SessionCubit extends Cubit<SessionState> {
       );
       DebugLogger.log(_tag, 'connected to room ${tokenData.roomId}');
 
-      // 3. Enable mic and camera independently — don't let one failure kill the session
+      // 3. Check runtime permissions, then enable tracks independently
       bool isMicEnabled = false;
       bool isCameraEnabled = false;
 
-      try {
-        await _room!.localParticipant?.setMicrophoneEnabled(true);
-        isMicEnabled = true;
-      } catch (e) {
-        DebugLogger.error(_tag, 'mic enable failed (continuing): $e');
+      final micStatus = await Permission.microphone.status;
+      final camStatus = await Permission.camera.status;
+      DebugLogger.log(_tag, 'permissions: mic=${micStatus.isGranted} cam=${camStatus.isGranted}');
+
+      if (micStatus.isGranted) {
+        try {
+          await _room!.localParticipant?.setMicrophoneEnabled(true);
+          isMicEnabled = true;
+        } catch (e) {
+          DebugLogger.error(_tag, 'mic enable failed: $e');
+        }
       }
 
-      try {
-        await _room!.localParticipant?.setCameraEnabled(true);
-        isCameraEnabled = true;
-      } catch (e) {
-        DebugLogger.error(_tag, 'camera enable failed (continuing): $e');
+      if (camStatus.isGranted) {
+        try {
+          await _room!.localParticipant?.setCameraEnabled(true);
+          isCameraEnabled = true;
+        } catch (e) {
+          DebugLogger.error(_tag, 'camera enable failed: $e');
+        }
       }
 
       DebugLogger.log(_tag, 'tracks: mic=$isMicEnabled camera=$isCameraEnabled');

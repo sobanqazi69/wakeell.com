@@ -52,6 +52,8 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Wakeell needs access to your photo library to upload your profile photo and documents.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Wakeell needs camera access to capture your profile photo and ID documents.</string>
+	<string>Wakeell needs camera access for video consultations and to upload your profile photo.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Wakeell needs microphone access for audio and video consultations with lawyers.</string>
 </dict>
 </plist>
