@@ -141,6 +141,18 @@ exports.uploadMyAvatar = async (req, res) => {
   }
 };
 
+exports.removeMyAvatar = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    await user.update({ avatar: null });
+    return res.json({ user });
+  } catch (err) {
+    console.error('[auth.removeMyAvatar]', err);
+    return res.status(500).json({ message: 'Failed to remove avatar' });
+  }
+};
+
 exports.updateFcmToken = async (req, res) => {
   try {
     const { fcmToken } = req.body;

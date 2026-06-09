@@ -20,9 +20,9 @@ class ChatCubit extends Cubit<ChatState> {
     required this.bookingId,
     required this.currentUserId,
     this.currentUserName = 'Me',
-  })  : _repo = repo,
-        _socket = socket,
-        super(const ChatInitial());
+  }) : _repo = repo,
+       _socket = socket,
+       super(const ChatInitial());
 
   Future<void> init() async {
     try {
@@ -44,14 +44,20 @@ class ChatCubit extends Cubit<ChatState> {
           if (s.messages.any((m) => m.id == msg.id && msg.id != 0)) return;
 
           // Our own optimistic placeholder is waiting → replace it.
-          final hasOptimistic = msg.senderId == currentUserId &&
+          final hasOptimistic =
+              msg.senderId == currentUserId &&
               s.messages.any((m) => m.id == 0 && m.message == msg.message);
           if (hasOptimistic) {
-            final updated = s.messages.map((m) =>
-              (m.id == 0 && m.message == msg.message && m.senderId == currentUserId)
-                  ? msg
-                  : m,
-            ).toList();
+            final updated = s.messages
+                .map(
+                  (m) =>
+                      (m.id == 0 &&
+                          m.message == msg.message &&
+                          m.senderId == currentUserId)
+                      ? msg
+                      : m,
+                )
+                .toList();
             emit(ChatLoaded(updated));
           } else {
             emit(s.withMessage(msg));
@@ -91,11 +97,16 @@ class ChatCubit extends Cubit<ChatState> {
       final current = state;
       if (current is ChatLoaded && !isClosed) {
         if (current.messages.any((m) => m.id == confirmed.id)) return;
-        final updated = current.messages.map((m) =>
-          (m.id == 0 && m.message == trimmed && m.senderId == currentUserId)
-              ? confirmed
-              : m,
-        ).toList();
+        final updated = current.messages
+            .map(
+              (m) =>
+                  (m.id == 0 &&
+                      m.message == trimmed &&
+                      m.senderId == currentUserId)
+                  ? confirmed
+                  : m,
+            )
+            .toList();
         emit(ChatLoaded(updated));
       }
     } catch (e) {

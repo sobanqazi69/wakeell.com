@@ -203,6 +203,22 @@ class AuthRepository {
     }
   }
 
+  Future<UserModel> removeAvatar() async {
+    try {
+      final res = await _api.delete('/auth/me/avatar');
+      final data = res.data as Map<String, dynamic>;
+      final userJson = handleNullableMapKey(data, 'user') ?? data;
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'removeAvatar: ${e.message}');
+      throw AuthException(_extractMessage(e) ?? 'Failed to remove avatar');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'removeAvatar unexpected: $e');
+      throw const AuthException('Failed to remove avatar');
+    }
+  }
+
   Future<void> logout() async {
     await _token.clearToken();
     DebugLogger.log(_tag, 'Logged out');

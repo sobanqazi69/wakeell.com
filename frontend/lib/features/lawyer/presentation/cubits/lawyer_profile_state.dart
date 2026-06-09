@@ -32,3 +32,9 @@ class LawyerProfileError extends LawyerProfileState {
   const LawyerProfileError(this.message);
   @override List<Object?> get props => [message];
 }
+
+class LawyerProfileAvatarUpdating extends LawyerProfileState {
+  final LawyerModel lawyer;
+  const LawyerProfileAvatarUpdating(this.lawyer);
+  @override List<Object?> get props => [lawyer];
+}
