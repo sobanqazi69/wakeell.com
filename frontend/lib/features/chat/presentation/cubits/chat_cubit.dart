@@ -12,12 +12,18 @@ class ChatCubit extends Cubit<ChatState> {
   final SocketService _socket;
   final int bookingId;
   final int currentUserId;
+  final String currentUserName;
+
+  // Tracks optimistically-added message texts to avoid showing duplicates
+  // when the server echoes the same message back via chat:message.
+  final Set<String> _pendingMessages = {};
 
   ChatCubit({
     required ChatRepository repo,
     required SocketService socket,
     required this.bookingId,
     required this.currentUserId,
+    this.currentUserName = 'Me',
   })  : _repo = repo,
         _socket = socket,
         super(const ChatInitial());
@@ -35,6 +41,8 @@ class ChatCubit extends Cubit<ChatState> {
           final msg = ChatMessageModel.fromJson(
             Map<String, dynamic>.from(data as Map),
           );
+          // Skip echo of a message we already added optimistically.
+          if (_pendingMessages.remove(msg.message)) return;
           final s = state;
           if (s is ChatLoaded && !isClosed) {
             emit(s.withMessage(msg));
@@ -50,11 +58,24 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   void sendMessage(String text) {
-    if (text.trim().isEmpty) return;
-    _socket.emit('chat:send', {
-      'bookingId': bookingId,
-      'message': text.trim(),
-    });
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
+    // Optimistically show the message immediately.
+    final optimistic = ChatMessageModel(
+      id: 0,
+      bookingId: bookingId,
+      senderId: currentUserId,
+      senderRole: '',
+      message: trimmed,
+      senderName: currentUserName,
+      createdAt: DateTime.now(),
+    );
+    _pendingMessages.add(trimmed);
+    final s = state;
+    if (s is ChatLoaded && !isClosed) emit(s.withMessage(optimistic));
+
+    _socket.emit('chat:send', {'bookingId': bookingId, 'message': trimmed});
   }
 
   @override

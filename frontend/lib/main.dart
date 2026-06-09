@@ -144,12 +144,16 @@ class WakeellApp extends StatelessWidget {
             final userId = authState is AuthAuthenticated
                 ? authState.user.id
                 : 0;
+            final userName = authState is AuthAuthenticated
+                ? authState.user.name
+                : 'Me';
             return BlocProvider(
               create: (_) => ChatCubit(
                 repo: getIt<ChatRepository>(),
                 socket: getIt<SocketService>(),
                 bookingId: args['bookingId'] as int,
                 currentUserId: userId,
+                currentUserName: userName,
               ),
               child: ChatScreen(
                 otherPartyName:

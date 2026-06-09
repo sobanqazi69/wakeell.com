@@ -21,9 +21,15 @@ const _kSlots = [
   '21:00', '21:30', '22:00', '22:30', '23:00', '23:30',
 ];
 
-const _kBg      = Color(0xFF0A0818);
-const _kCard    = Color(0xFF13102A);
-const _kBorder  = Color(0xFF1E1B38);
+// Light theme palette
+const _kBg        = Color(0xFFF6F5FA);
+const _kCard      = Colors.white;
+const _kBorder    = Color(0xFFE8E4F3);
+const _kAccent    = Color(0xFF7B2FBE);
+const _kAccentBg  = Color(0xFFF0E8FF);
+const _kTextPri   = Color(0xFF1A1040);
+const _kTextSec   = Color(0xFF6B5E8C);
+const _kTextHint  = Color(0xFFB0A8C8);
 
 // ─── Day range model (local UI state) ────────────────────────────────────────
 
@@ -77,6 +83,12 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
   int _day = 0;
   final _ranges = List<_DayRange>.filled(7, const _DayRange(), growable: false);
   bool _hydrated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<LawyerAvailabilityCubit>().load();
+  }
 
   void _hydrate(Map<int, List<String>> schedule) {
     if (_hydrated) return;
@@ -173,15 +185,16 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
                         color: _kCard,
                         shape: BoxShape.circle,
                         border: Border.all(color: _kBorder),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
                       ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white54, size: 18),
+                      child: Icon(Icons.arrow_back, color: _kTextSec, size: 18),
                     ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text('Availability',
                         style: GoogleFonts.outfit(
-                            fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                            fontSize: 20, fontWeight: FontWeight.w700, color: _kTextPri)),
                   ),
                   if (isLoaded)
                     GestureDetector(
@@ -191,15 +204,16 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
                         duration: const Duration(milliseconds: 160),
                         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSaving ? _kCard : Colors.white,
+                          color: isSaving ? _kBorder : _kAccent,
                           borderRadius: BorderRadius.circular(22),
+                          boxShadow: isSaving ? [] : [BoxShadow(color: _kAccent.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
                         ),
                         child: isSaving
                             ? const SizedBox(width: 16, height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black38))
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54))
                             : Text('Save',
                                 style: GoogleFonts.outfit(
-                                    fontSize: 13, fontWeight: FontWeight.w700, color: Colors.black87)),
+                                    fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
                       ),
                     ),
                 ]),
@@ -220,23 +234,26 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
                           margin: EdgeInsets.only(right: i < 6 ? 6 : 0),
                           padding: const EdgeInsets.symmetric(vertical: 9),
                           decoration: BoxDecoration(
-                            color: isOn ? Colors.white : _kCard,
+                            color: isOn ? _kAccent : _kCard,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: isOn ? Colors.white : _kBorder),
+                            border: Border.all(color: isOn ? _kAccent : _kBorder),
+                            boxShadow: isOn
+                                ? [BoxShadow(color: _kAccent.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 3))]
+                                : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 1))],
                           ),
                           child: Column(mainAxisSize: MainAxisSize.min, children: [
                             Text(_kDays[i],
                                 style: GoogleFonts.outfit(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
-                                    color: isOn ? Colors.black87 : Colors.white30)),
+                                    color: isOn ? Colors.white : _kTextHint)),
                             const SizedBox(height: 5),
                             Container(
                               width: 4, height: 4,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: hasSlots
-                                    ? (isOn ? const Color(0xFF6B46C1) : Colors.white30)
+                                    ? (isOn ? Colors.white.withValues(alpha: 0.7) : _kAccent.withValues(alpha: 0.4))
                                     : Colors.transparent,
                               ),
                             ),
@@ -250,9 +267,9 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
 
               // ── Loading ─────────────────────────────────────────────
               if (!isLoaded)
-                const Expanded(
+                Expanded(
                   child: Center(
-                    child: CircularProgressIndicator(color: Colors.white24, strokeWidth: 2),
+                    child: CircularProgressIndicator(color: _kAccent.withValues(alpha: 0.4), strokeWidth: 2),
                   ),
                 ),
 
@@ -270,11 +287,12 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
                           color: _kCard,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: _kBorder),
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2))],
                         ),
                         child: Row(children: [
                           Text(_kFullDays[_day],
                               style: GoogleFonts.outfit(
-                                  fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                                  fontSize: 15, fontWeight: FontWeight.w700, color: _kTextPri)),
                           const Spacer(),
                           _MinimalSwitch(
                             value: r.enabled,
@@ -287,7 +305,7 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
 
                       // From / To pickers
                       AnimatedOpacity(
-                        opacity: r.enabled ? 1.0 : 0.3,
+                        opacity: r.enabled ? 1.0 : 0.4,
                         duration: const Duration(milliseconds: 200),
                         child: IgnorePointer(
                           ignoring: !r.enabled,
@@ -298,9 +316,8 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
                               onTap: () => _pickTime(true),
                             )),
                             const SizedBox(width: 12),
-                            // Arrow
                             Icon(Icons.arrow_forward_rounded,
-                                color: Colors.white.withValues(alpha: 0.16), size: 18),
+                                color: _kTextHint, size: 18),
                             const SizedBox(width: 12),
                             Expanded(child: _TimePill(
                               label: 'To',
@@ -310,14 +327,21 @@ class _LawyerAvailabilityScreenState extends State<LawyerAvailabilityScreen> {
                           ]),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
 
                       // Slot count hint
                       if (r.enabled && r.slotCount > 0)
-                        Text(
-                          '${r.slotCount} slot${r.slotCount == 1 ? '' : 's'} · every 30 min',
-                          style: GoogleFonts.outfit(
-                              fontSize: 12, color: Colors.white24),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _kAccentBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${r.slotCount} slot${r.slotCount == 1 ? '' : 's'} · every 30 min',
+                            style: GoogleFonts.outfit(
+                                fontSize: 12, fontWeight: FontWeight.w500, color: _kAccent),
+                          ),
                         ),
 
                       const Spacer(),
@@ -388,16 +412,16 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
         Container(
           width: 36, height: 4,
           decoration: BoxDecoration(
-            color: Colors.white12,
+            color: _kBorder,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(height: 16),
         Text('Select Time',
             style: GoogleFonts.outfit(
-                fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                fontSize: 15, fontWeight: FontWeight.w700, color: _kTextPri)),
         const SizedBox(height: 12),
-        const Divider(color: _kBorder, height: 1),
+        Divider(color: _kBorder, height: 1),
 
         // Time list
         Expanded(
@@ -419,7 +443,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                   duration: const Duration(milliseconds: 120),
                   margin: const EdgeInsets.fromLTRB(20, 3, 20, 3),
                   decoration: BoxDecoration(
-                    color: isOn ? Colors.white : Colors.transparent,
+                    color: isOn ? _kAccent : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -428,7 +452,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                       style: GoogleFonts.outfit(
                           fontSize: 15,
                           fontWeight: isOn ? FontWeight.w700 : FontWeight.w400,
-                          color: isOn ? Colors.black87 : Colors.white38),
+                          color: isOn ? Colors.white : _kTextSec),
                     ),
                   ),
                 ),
@@ -455,24 +479,25 @@ class _TimePill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: _kCard,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _kBorder),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label,
               style: GoogleFonts.outfit(
-                  fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white30)),
-          const SizedBox(height: 6),
+                  fontSize: 11, fontWeight: FontWeight.w600, color: _kTextHint)),
+          const SizedBox(height: 5),
           Row(children: [
             Expanded(
               child: Text(value,
                   style: GoogleFonts.outfit(
-                      fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                      fontSize: 16, fontWeight: FontWeight.w700, color: _kTextPri)),
             ),
-            const Icon(Icons.expand_more_rounded, color: Colors.white24, size: 18),
+            Icon(Icons.expand_more_rounded, color: _kTextHint, size: 18),
           ]),
         ]),
       ),
@@ -495,7 +520,7 @@ class _MinimalSwitch extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         width: 44, height: 24,
         decoration: BoxDecoration(
-          color: value ? Colors.white : Colors.white.withValues(alpha: 0.08),
+          color: value ? _kAccent : _kBorder,
           borderRadius: BorderRadius.circular(12),
         ),
         child: AnimatedAlign(
@@ -505,8 +530,9 @@ class _MinimalSwitch extends StatelessWidget {
             width: 18, height: 18,
             margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: BoxDecoration(
-              color: value ? Colors.black87 : Colors.white24,
+              color: Colors.white,
               shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 1))],
             ),
           ),
         ),
@@ -535,24 +561,24 @@ class _WeekSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _kAccentBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _kAccent.withValues(alpha: 0.15)),
       ),
       child: Row(children: [
-        const Icon(Icons.calendar_month_outlined, size: 15, color: Colors.white24),
+        Icon(Icons.calendar_month_outlined, size: 15, color: _kAccent.withValues(alpha: 0.6)),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             activeDays.join(' · '),
             style: GoogleFonts.outfit(
-                fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white38),
+                fontSize: 12, fontWeight: FontWeight.w500, color: _kTextSec),
           ),
         ),
         Text(
           '${ranges.fold<int>(0, (s, r) => s + r.slotCount)} slots',
           style: GoogleFonts.outfit(
-              fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white24),
+              fontSize: 12, fontWeight: FontWeight.w700, color: _kAccent),
         ),
       ]),
     );

@@ -173,7 +173,7 @@ class _ChatScreenState extends State<ChatScreen> {
               maxLines: null,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
-              style: GoogleFonts.outfit(fontSize: 14, color: Colors.white),
+              style: GoogleFonts.outfit(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Type a message…',
                 hintStyle: GoogleFonts.outfit(fontSize: 14, color: AppColors.textSecondary),
@@ -226,10 +226,15 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(height: 2),
           ],
           Text(msg.message,
-              style: GoogleFonts.outfit(fontSize: 14, color: Colors.white, height: 1.4)),
+              style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: isMe ? Colors.white : AppColors.textPrimary,
+                  height: 1.4)),
           const SizedBox(height: 4),
           Text(_formatTime(msg.createdAt),
-              style: GoogleFonts.outfit(fontSize: 10, color: Colors.white38)),
+              style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  color: isMe ? Colors.white38 : AppColors.textSecondary)),
         ]),
       ),
     );

@@ -10,6 +10,36 @@ class LawyerAvailabilityCubit extends Cubit<LawyerAvailabilityState> {
 
   LawyerAvailabilityCubit(this._repo) : super(const LawyerAvailabilityInitial());
 
+  Future<void> load() async {
+    try {
+      if (!isClosed) emit(const LawyerAvailabilityLoading());
+      final profile      = await _repo.getMyProfile();
+      final availability = await _repo.getAvailability(profile.id);
+
+      if (availability.isEmpty) {
+        if (!isClosed) emit(LawyerAvailabilityLoaded(_defaultSchedule()));
+        return;
+      }
+
+      // Convert date-keyed slots → day-of-week-keyed (0=Mon … 6=Sun).
+      // The same weekday recurs every week; take the first occurrence of each.
+      final schedule = <int, List<String>>{};
+      final sortedDates = availability.keys.toList()..sort();
+      for (final dateStr in sortedDates) {
+        try {
+          final dayIndex = DateTime.parse(dateStr).weekday - 1;
+          schedule.putIfAbsent(dayIndex, () => availability[dateStr]!);
+        } catch (_) {}
+      }
+
+      if (!isClosed) emit(LawyerAvailabilityLoaded(schedule));
+    } catch (e) {
+      DebugLogger.error(_tag, 'load: $e');
+      // Fall back to default so the screen is always usable
+      if (!isClosed) emit(LawyerAvailabilityLoaded(_defaultSchedule()));
+    }
+  }
+
   void startEdit() {
     if (!isClosed) emit(LawyerAvailabilityLoaded(_defaultSchedule()));
   }
