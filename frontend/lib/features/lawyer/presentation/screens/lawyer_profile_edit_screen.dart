@@ -1,9 +1,11 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import '../../../../config/theme/app_colors.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../../../core/widgets/city_picker.dart';
 import '../../data/models/lawyer_model.dart';
@@ -31,11 +33,11 @@ class LawyerProfileEditScreen extends StatefulWidget {
 class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
   static const _tag = 'LawyerProfileEditScreen';
 
-  final _nameCtrl = TextEditingController();
+  final _nameCtrl  = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _bioCtrl = TextEditingController();
-  final _rateCtrl = TextEditingController();
-  final _expCtrl = TextEditingController();
+  final _bioCtrl   = TextEditingController();
+  final _rateCtrl  = TextEditingController();
+  final _expCtrl   = TextEditingController();
 
   String _location = '';
   List<String> _specializations = [];
@@ -44,6 +46,8 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
 
   List<String> _cities = [];
   bool _citiesLoading = true;
+
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -85,20 +89,20 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
 
   void _populate(LawyerModel l) {
     if (_nameCtrl.text.isEmpty) {
-      _nameCtrl.text = l.name;
+      _nameCtrl.text  = l.name;
       _phoneCtrl.text = l.phone ?? '';
-      _bioCtrl.text = l.bio;
-      _rateCtrl.text = l.hourlyRate > 0 ? l.hourlyRate.toStringAsFixed(0) : '';
-      _expCtrl.text = l.experience > 0 ? '${l.experience}' : '';
-      _location = l.location ?? '';
+      _bioCtrl.text   = l.bio;
+      _rateCtrl.text  = l.hourlyRate > 0 ? l.hourlyRate.toStringAsFixed(0) : '';
+      _expCtrl.text   = l.experience > 0 ? '${l.experience}' : '';
+      _location       = l.location ?? '';
       _specializations = List.from(l.specializations);
-      _languages = List.from(l.languages);
+      _languages       = List.from(l.languages);
     }
   }
 
   void _save() {
     final rate = double.tryParse(_rateCtrl.text.trim()) ?? 0;
-    final exp = int.tryParse(_expCtrl.text.trim()) ?? 0;
+    final exp  = int.tryParse(_expCtrl.text.trim()) ?? 0;
     context.read<LawyerProfileCubit>().save(
       name: _nameCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
@@ -108,6 +112,48 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
       languages: _languages,
       hourlyRate: rate,
       experience: exp,
+    );
+  }
+
+  String _resolveAvatar(String? relative) {
+    if (relative == null || relative.isEmpty) return '';
+    if (relative.startsWith('http')) return relative;
+    return '${ApiClient.baseUrl.replaceAll('/api', '')}$relative';
+  }
+
+  Future<void> _pickAndUpload(ImageSource source) async {
+    try {
+      final photo = await _picker.pickImage(source: source, imageQuality: 85, maxWidth: 800);
+      if (photo == null || !mounted) return;
+      context.read<LawyerProfileCubit>().uploadAvatar(photo);
+    } catch (e) {
+      DebugLogger.error(_tag, 'pickAndUpload: $e');
+    }
+  }
+
+  void _showAvatarOptions(LawyerModel lawyer) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 36, height: 4, margin: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(color: AppColors.fieldBorder, borderRadius: BorderRadius.circular(2))),
+          Text('Profile Photo', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 8),
+          _SheetOption(icon: Icons.camera_alt_outlined, label: 'Take Photo',
+            onTap: () { Navigator.pop(context); _pickAndUpload(ImageSource.camera); }),
+          _SheetOption(icon: Icons.photo_library_outlined, label: 'Choose from Gallery',
+            onTap: () { Navigator.pop(context); _pickAndUpload(ImageSource.gallery); }),
+          if (lawyer.avatar != null && lawyer.avatar!.isNotEmpty)
+            _SheetOption(icon: Icons.delete_outline, label: 'Remove Photo', isDestructive: true,
+              onTap: () { Navigator.pop(context); context.read<LawyerProfileCubit>().removeAvatar(); }),
+          const SizedBox(height: 8),
+        ]),
+      ),
     );
   }
 
@@ -143,12 +189,21 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
         }
       },
       builder: (context, state) {
-        final isSaving = state is LawyerProfileSaving;
+        final isSaving  = state is LawyerProfileSaving;
         final isLoading = state is LawyerProfileLoading || state is LawyerProfileInitial;
+        final isAvatarUpdating = state is LawyerProfileAvatarUpdating;
+
+        final lawyer = switch (state) {
+          LawyerProfileLoaded s       => s.lawyer,
+          LawyerProfileSaving s       => s.lawyer,
+          LawyerProfileAvatarUpdating s => s.lawyer,
+          _ => null,
+        };
 
         return Scaffold(
           backgroundColor: AppColors.bg,
           body: Column(children: [
+
             // ── Header ──────────────────────────────────────────────────
             Container(
               color: AppColors.navy,
@@ -177,8 +232,7 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: isSaving
-                          ? SizedBox(
-                              width: 16, height: 16,
+                          ? SizedBox(width: 16, height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.navy))
                           : Text('Save', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navy)),
                     ),
@@ -192,7 +246,49 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
               Expanded(child: ListView(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
                 children: [
-                  // ── Personal ─────────────────────────────────────────────
+
+                  // ── Avatar Section ──────────────────────────────────────
+                  if (lawyer != null) ...[
+                    Center(child: GestureDetector(
+                      onTap: () => _showAvatarOptions(lawyer),
+                      child: Stack(clipBehavior: Clip.none, children: [
+                        // Avatar circle
+                        Container(
+                          width: 90, height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.fieldBorder, width: 2),
+                          ),
+                          child: ClipOval(child: _buildAvatarContent(lawyer, isAvatarUpdating)),
+                        ),
+                        // Camera badge
+                        Positioned(
+                          bottom: 0, right: 0,
+                          child: Container(
+                            width: 28, height: 28,
+                            decoration: BoxDecoration(
+                              color: AppColors.navy,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.bg, width: 2),
+                            ),
+                            child: isAvatarUpdating
+                                ? const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                          ),
+                        ),
+                      ]),
+                    )),
+                    const SizedBox(height: 6),
+                    Center(child: Text(
+                      'Tap to change photo',
+                      style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textSecondary),
+                    )),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // ── Personal ──────────────────────────────────────────────
                   _SectionLabel('Personal'),
                   const SizedBox(height: 12),
                   _Field(label: 'Full Name', controller: _nameCtrl, icon: Icons.person_outline),
@@ -261,6 +357,68 @@ class _LawyerProfileEditScreenState extends State<LawyerProfileEditScreen> {
           ]),
         );
       },
+    );
+  }
+
+  Widget _buildAvatarContent(LawyerModel lawyer, bool isUpdating) {
+    final avatarUrl = _resolveAvatar(lawyer.avatar);
+    if (avatarUrl.isNotEmpty) {
+      return Image.network(
+        avatarUrl,
+        width: 90, height: 90, fit: BoxFit.cover,
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            color: AppColors.navy,
+            child: const Center(child: SizedBox(width: 20, height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54))),
+          );
+        },
+        errorBuilder: (context2, err, stack) => _initialsAvatar(lawyer),
+      );
+    }
+    return _initialsAvatar(lawyer);
+  }
+
+  Widget _initialsAvatar(LawyerModel lawyer) {
+    return Container(
+      color: AppColors.navy,
+      child: Center(child: Text(
+        lawyer.initials,
+        style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white),
+      )),
+    );
+  }
+}
+
+// ─── Bottom Sheet Option ──────────────────────────────────────────────────────
+
+class _SheetOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  const _SheetOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive ? AppColors.error : AppColors.textPrimary;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(children: [
+          Icon(icon, size: 22, color: color),
+          const SizedBox(width: 16),
+          Text(label, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+        ]),
+      ),
     );
   }
 }
@@ -368,8 +526,7 @@ class _MultiSelect extends StatelessWidget {
                 border: Border.all(color: isOn ? AppColors.navy : AppColors.fieldBorder),
               ),
               child: Text(opt, style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontSize: 12, fontWeight: FontWeight.w600,
                 color: isOn ? Colors.white : AppColors.textSecondary,
               )),
             ),

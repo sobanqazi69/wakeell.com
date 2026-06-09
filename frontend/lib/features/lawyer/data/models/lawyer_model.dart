@@ -72,6 +72,13 @@ class LawyerModel extends Equatable {
     }
   }
 
+  LawyerModel copyWith({String? avatar}) => LawyerModel(
+    id: id, userId: userId, barLicense: barLicense, specializations: specializations,
+    bio: bio, languages: languages, hourlyRate: hourlyRate, currency: currency,
+    experience: experience, rating: rating, reviewCount: reviewCount, status: status,
+    name: name, avatar: avatar, location: location, jurisdiction: jurisdiction, phone: phone,
+  );
+
   String get initials {
     final parts = name.trim().split(' ');
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();

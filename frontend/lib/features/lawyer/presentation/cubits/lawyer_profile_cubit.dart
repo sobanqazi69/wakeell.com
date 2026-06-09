@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../../auth/data/repositories/auth_repository.dart'; // AuthException, AuthRepository
 import '../../data/repositories/lawyer_repository.dart';
@@ -22,6 +23,44 @@ class LawyerProfileCubit extends Cubit<LawyerProfileState> {
     } catch (e) {
       DebugLogger.error(_tag, 'load unexpected: $e');
       if (!isClosed) emit(const LawyerProfileError('Failed to load profile'));
+    }
+  }
+
+  Future<void> uploadAvatar(XFile photo) async {
+    final current = state;
+    if (current is! LawyerProfileLoaded) return;
+    try {
+      if (!isClosed) emit(LawyerProfileAvatarUpdating(current.lawyer));
+      final updatedUser = await _authRepo.uploadAvatar(photo);
+      final refreshed = await _lawyerRepo.getMyProfile();
+      if (!isClosed) emit(LawyerProfileLoaded(refreshed.copyWith(avatar: updatedUser.avatar)));
+    } on AuthException catch (e) {
+      DebugLogger.error(_tag, e.message);
+      if (!isClosed) emit(LawyerProfileLoaded(current.lawyer));
+      if (!isClosed) emit(LawyerProfileError(e.message));
+    } catch (e) {
+      DebugLogger.error(_tag, 'uploadAvatar unexpected: $e');
+      if (!isClosed) emit(LawyerProfileLoaded(current.lawyer));
+      if (!isClosed) emit(const LawyerProfileError('Failed to upload photo'));
+    }
+  }
+
+  Future<void> removeAvatar() async {
+    final current = state;
+    if (current is! LawyerProfileLoaded) return;
+    try {
+      if (!isClosed) emit(LawyerProfileAvatarUpdating(current.lawyer));
+      await _authRepo.removeAvatar();
+      final refreshed = await _lawyerRepo.getMyProfile();
+      if (!isClosed) emit(LawyerProfileLoaded(refreshed.copyWith(avatar: null)));
+    } on AuthException catch (e) {
+      DebugLogger.error(_tag, e.message);
+      if (!isClosed) emit(LawyerProfileLoaded(current.lawyer));
+      if (!isClosed) emit(LawyerProfileError(e.message));
+    } catch (e) {
+      DebugLogger.error(_tag, 'removeAvatar unexpected: $e');
+      if (!isClosed) emit(LawyerProfileLoaded(current.lawyer));
+      if (!isClosed) emit(const LawyerProfileError('Failed to remove photo'));
     }
   }
 
