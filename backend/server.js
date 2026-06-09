@@ -51,6 +51,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', db: 'mysql' }));
 app.use(errorHandler);
 
 socketHandler(io);
+require('./src/controllers/chat.controller').setIo(io);
 
 const PORT = process.env.PORT || 3004;
 const isDev = process.env.NODE_ENV === 'development';

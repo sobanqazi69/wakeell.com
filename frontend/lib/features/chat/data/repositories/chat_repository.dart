@@ -25,4 +25,19 @@ class ChatRepository {
       return [];
     }
   }
+
+  Future<ChatMessageModel> sendMessage(int bookingId, String message) async {
+    try {
+      final res = await _api.post('/chats/$bookingId', data: {'message': message});
+      final data = res.data as Map<String, dynamic>;
+      return ChatMessageModel.fromJson(
+          (data['message'] as Map<String, dynamic>?) ?? {});
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'sendMessage: ${e.message}');
+      rethrow;
+    } catch (e) {
+      DebugLogger.error(_tag, 'sendMessage unexpected: $e');
+      rethrow;
+    }
+  }
 }
