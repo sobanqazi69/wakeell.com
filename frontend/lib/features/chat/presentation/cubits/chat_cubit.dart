@@ -14,10 +14,6 @@ class ChatCubit extends Cubit<ChatState> {
   final int currentUserId;
   final String currentUserName;
 
-  // Tracks optimistically-added message texts to avoid showing duplicates
-  // when the server echoes the same message back via chat:message.
-  final Set<String> _pendingMessages = {};
-
   ChatCubit({
     required ChatRepository repo,
     required SocketService socket,
@@ -41,10 +37,23 @@ class ChatCubit extends Cubit<ChatState> {
           final msg = ChatMessageModel.fromJson(
             Map<String, dynamic>.from(data as Map),
           );
-          // Skip echo of a message we already added optimistically.
-          if (_pendingMessages.remove(msg.message)) return;
           final s = state;
-          if (s is ChatLoaded && !isClosed) {
+          if (s is! ChatLoaded || isClosed) return;
+
+          // Already in state (HTTP confirm arrived first) → skip.
+          if (s.messages.any((m) => m.id == msg.id && msg.id != 0)) return;
+
+          // Our own optimistic placeholder is waiting → replace it.
+          final hasOptimistic = msg.senderId == currentUserId &&
+              s.messages.any((m) => m.id == 0 && m.message == msg.message);
+          if (hasOptimistic) {
+            final updated = s.messages.map((m) =>
+              (m.id == 0 && m.message == msg.message && m.senderId == currentUserId)
+                  ? msg
+                  : m,
+            ).toList();
+            emit(ChatLoaded(updated));
+          } else {
             emit(s.withMessage(msg));
           }
         } catch (e) {
@@ -57,11 +66,11 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  void sendMessage(String text) {
+  Future<void> sendMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
 
-    // Optimistically show the message immediately.
+    // Add optimistic placeholder immediately.
     final optimistic = ChatMessageModel(
       id: 0,
       bookingId: bookingId,
@@ -71,11 +80,27 @@ class ChatCubit extends Cubit<ChatState> {
       senderName: currentUserName,
       createdAt: DateTime.now(),
     );
-    _pendingMessages.add(trimmed);
     final s = state;
     if (s is ChatLoaded && !isClosed) emit(s.withMessage(optimistic));
 
-    _socket.emit('chat:send', {'bookingId': bookingId, 'message': trimmed});
+    try {
+      final confirmed = await _repo.sendMessage(bookingId, trimmed);
+
+      // If socket already replaced the optimistic, the confirmed ID is present —
+      // nothing to do. Otherwise swap the placeholder with the confirmed message.
+      final current = state;
+      if (current is ChatLoaded && !isClosed) {
+        if (current.messages.any((m) => m.id == confirmed.id)) return;
+        final updated = current.messages.map((m) =>
+          (m.id == 0 && m.message == trimmed && m.senderId == currentUserId)
+              ? confirmed
+              : m,
+        ).toList();
+        emit(ChatLoaded(updated));
+      }
+    } catch (e) {
+      DebugLogger.error(_tag, 'sendMessage: $e');
+    }
   }
 
   @override
