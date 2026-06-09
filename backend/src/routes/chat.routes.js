@@ -4,5 +4,6 @@ const { protect } = require('../middleware/auth');
 
 router.use(protect);
 router.get('/:bookingId', ctrl.getHistory);
+router.post('/:bookingId', ctrl.sendMessage);
 
 module.exports = router;
