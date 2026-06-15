@@ -12,7 +12,20 @@
           "package_name": "com.wakeell.wakeell"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "95303049933-ggaf5g7o80mv6t9cuepbtld4adojcdq7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wakeell.wakeell",
+            "certificate_hash": ""
+          }
+        },
+        {
+          "client_id": "95303049933-bfki8s60lgu9tjrercad3l6c4q5fgv89.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCcuXPTyo2S-B7JK8mypKDU5iSrY9kog6Q"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "95303049933-bfki8s60lgu9tjrercad3l6c4q5fgv89.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

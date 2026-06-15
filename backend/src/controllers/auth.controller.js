@@ -155,11 +155,11 @@ exports.removeMyAvatar = async (req, res) => {
 
 exports.googleAuth = async (req, res) => {
   try {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ message: 'token is required' });
+    const { token: idToken } = req.body;
+    if (!idToken) return res.status(400).json({ message: 'token is required' });
 
     // Verify the ID token with Google's tokeninfo endpoint
-    const infoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+    const infoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
     if (!infoRes.ok) return res.status(401).json({ message: 'Invalid Google token' });
 
     const payload = await infoRes.json();

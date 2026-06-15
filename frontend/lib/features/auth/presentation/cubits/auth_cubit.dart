@@ -13,9 +13,8 @@ import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   static const String _tag = 'AuthCubit';
-  // Web OAuth 2.0 Client ID from Google Cloud Console (for idToken issuance)
   static const String _googleServerClientId =
-      'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+      '95303049933-bfki8s60lgu9tjrercad3l6c4q5fgv89.apps.googleusercontent.com';
   static bool _googleInitialized = false;
 
   final AuthRepository _repo;
