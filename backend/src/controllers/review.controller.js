@@ -80,8 +80,12 @@ exports.getBookingReview = async (req, res) => {
 
 exports.getLawyerReviews = async (req, res) => {
   try {
+    // req.params.lawyerId is the Lawyer profile PK; reviews store the lawyer's userId
+    const lawyer = await Lawyer.findByPk(req.params.lawyerId, { attributes: ['userId'] });
+    if (!lawyer) return res.json({ reviews: [] });
+
     const reviews = await Review.findAll({
-      where: { lawyerId: req.params.lawyerId },
+      where: { lawyerId: lawyer.userId },
       include: [{ model: User, as: 'client', attributes: ['id', 'name', 'avatar'] }],
       order: [['createdAt', 'DESC']],
     });
