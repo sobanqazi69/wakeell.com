@@ -174,8 +174,9 @@ class _BookingCard extends StatelessWidget {
                 color: AppColors.cyan,
                 filled: false,
                 onTap: () => Navigator.pushNamed(ctx, AppRoutes.chat, arguments: {
-                  'bookingId':      booking.id,
-                  'otherPartyName': booking.clientName ?? 'Client',
+                  'bookingId':        booking.id,
+                  'otherPartyName':   booking.clientName ?? 'Client',
+                  'otherPartyAvatar': booking.clientAvatar,
                 }),
               )),
             ),

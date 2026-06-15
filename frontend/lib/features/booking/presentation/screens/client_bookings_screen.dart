@@ -295,8 +295,9 @@ class _BookingCard extends StatelessWidget {
               Expanded(
                 child: GestureDetector(
                   onTap: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: {
-                    'bookingId':      booking.id,
-                    'otherPartyName': booking.lawyerName ?? 'Lawyer',
+                    'bookingId':       booking.id,
+                    'otherPartyName':  booking.lawyerName ?? 'Lawyer',
+                    'otherPartyAvatar': booking.lawyerAvatar,
                   }),
                   child: Container(
                     height: 38,

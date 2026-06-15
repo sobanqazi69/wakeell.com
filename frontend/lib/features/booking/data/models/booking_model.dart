@@ -15,6 +15,8 @@ class BookingModel extends Equatable {
   final String status;
   final String? clientName;
   final String? lawyerName;
+  final String? clientAvatar;
+  final String? lawyerAvatar;
 
   const BookingModel({
     required this.id,
@@ -29,6 +31,8 @@ class BookingModel extends Equatable {
     required this.status,
     this.clientName,
     this.lawyerName,
+    this.clientAvatar,
+    this.lawyerAvatar,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -46,8 +50,10 @@ class BookingModel extends Equatable {
         category:    handleNullableStringKey(json, 'category') ?? '',
         caseBrief:   handleNullableStringKey(json, 'caseBrief') ?? '',
         status:      handleNullableStringKey(json, 'status') ?? 'pending',
-        clientName:  handleNullableStringKey(client, 'name'),
-        lawyerName:  handleNullableStringKey(lawyerUser, 'name'),
+        clientName:   handleNullableStringKey(client, 'name'),
+        lawyerName:   handleNullableStringKey(lawyerUser, 'name'),
+        clientAvatar: handleNullableStringKey(client, 'avatar'),
+        lawyerAvatar: handleNullableStringKey(lawyerUser, 'avatar'),
       );
     } catch (_) {
       return const BookingModel(

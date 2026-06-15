@@ -8,8 +8,9 @@ import '../cubits/chat_state.dart';
 
 class ChatScreen extends StatefulWidget {
   final String otherPartyName;
+  final String? otherPartyAvatar;
 
-  const ChatScreen({super.key, required this.otherPartyName});
+  const ChatScreen({super.key, required this.otherPartyName, this.otherPartyAvatar});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -132,19 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [AppColors.purple, AppColors.navy]),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              widget.otherPartyName.isNotEmpty ? widget.otherPartyName[0].toUpperCase() : '?',
-              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-            ),
-          ),
-        ),
+        _buildAvatar(),
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(widget.otherPartyName,
@@ -153,6 +142,45 @@ class _ChatScreenState extends State<ChatScreen> {
               style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54)),
         ])),
       ]),
+    );
+  }
+
+  Widget _buildAvatar() {
+    final initials = widget.otherPartyName
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .take(2)
+        .map((w) => w[0].toUpperCase())
+        .join();
+    final fallback = Container(
+      width: 38, height: 38,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(colors: [AppColors.purple, AppColors.navy]),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(initials.isNotEmpty ? initials : '?',
+            style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+      ),
+    );
+
+    final avatar = widget.otherPartyAvatar;
+    if (avatar == null || avatar.isEmpty) return fallback;
+
+    const base = 'https://wakeell.microdesk.tech';
+    final url = avatar.startsWith('http') ? avatar : '$base$avatar';
+
+    return ClipOval(
+      child: SizedBox(
+        width: 38, height: 38,
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          loadingBuilder: (ctx, child, progress) =>
+              progress == null ? child : fallback,
+          errorBuilder: (ctx, err, stack) => fallback,
+        ),
+      ),
     );
   }
 

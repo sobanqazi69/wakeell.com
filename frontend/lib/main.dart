@@ -156,8 +156,8 @@ class WakeellApp extends StatelessWidget {
                 currentUserName: userName,
               ),
               child: ChatScreen(
-                otherPartyName:
-                    args['otherPartyName'] as String? ?? 'Consultant',
+                otherPartyName: args['otherPartyName'] as String? ?? 'Consultant',
+                otherPartyAvatar: args['otherPartyAvatar'] as String?,
               ),
             );
           },

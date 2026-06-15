@@ -76,6 +76,7 @@ class _ConversationTile extends StatelessWidget {
         onTap: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: {
           'bookingId': booking.id,
           'otherPartyName': name,
+          'otherPartyAvatar': booking.lawyerAvatar,
         }),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
