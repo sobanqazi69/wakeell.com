@@ -61,6 +61,9 @@ dependencies:
   livekit_client: ^2.3.3
   permission_handler: ^11.4.0
 
+  # Social auth
+  google_sign_in: ^7.2.0
+
   # Push notifications
   firebase_core: ^3.10.0
   firebase_messaging: ^15.2.4

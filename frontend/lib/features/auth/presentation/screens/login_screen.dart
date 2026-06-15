@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -214,9 +215,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Social buttons
                   Row(
                     children: [
-                      Expanded(child: _SocialButton(label: 'Google', icon: const Icon(Icons.g_mobiledata, size: 22, color: AppColors.textPrimary))),
-                      const SizedBox(width: 12),
-                      Expanded(child: _SocialButton(label: 'Apple', icon: const Icon(Icons.apple, size: 20, color: AppColors.textPrimary))),
+                      Expanded(
+                        child: _SocialButton(
+                          label: 'Google',
+                          icon: Image.asset('assets/google_logo.png', width: 20, height: 20,
+                              errorBuilder: (ctx, e, s) => const Icon(Icons.g_mobiledata, size: 22, color: AppColors.textPrimary)),
+                          onTap: () => context.read<AuthCubit>().loginWithGoogle(),
+                        ),
+                      ),
+                      if (Platform.isIOS) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Apple',
+                            icon: const Icon(Icons.apple, size: 20, color: AppColors.textPrimary),
+                            onTap: () {},
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -271,20 +287,24 @@ class _FieldLabel extends StatelessWidget {
 class _SocialButton extends StatelessWidget {
   final String label;
   final Widget icon;
-  const _SocialButton({required this.label, required this.icon});
+  final VoidCallback onTap;
+  const _SocialButton({required this.label, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.fieldBorder)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          icon,
-          const SizedBox(width: 8),
-          Text(label, style: GoogleFonts.outfit(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.fieldBorder)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 8),
+            Text(label, style: GoogleFonts.outfit(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../../../config/theme/app_colors.dart';
 import '../../../booking/data/models/booking_model.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_state.dart';
+import '../../../chat/presentation/cubits/chat_unread_cubit.dart';
 
 class LawyerChatTab extends StatelessWidget {
   const LawyerChatTab({super.key});
@@ -16,13 +17,11 @@ class LawyerChatTab extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-          child: Row(children: [
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Messages',
-                  style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-              Text('Chat with your clients',
-                  style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary)),
-            ])),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Messages',
+                style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            Text('Chat with your clients',
+                style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary)),
           ]),
         ),
         const SizedBox(height: 20),
@@ -35,18 +34,24 @@ class LawyerChatTab extends StatelessWidget {
 
               final chats = context.read<LawyerBookingsCubit>().completedBookings;
 
-              if (chats.isEmpty) {
-                return _EmptyState();
-              }
+              // Join all chat rooms so we receive real-time unread events.
+              context.read<ChatUnreadCubit>().joinBookings(chats.map((b) => b.id).toList());
+
+              if (chats.isEmpty) return const _EmptyState();
 
               return RefreshIndicator(
                 color: AppColors.navy,
                 onRefresh: () => context.read<LawyerBookingsCubit>().refresh(),
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: chats.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 2),
-                  itemBuilder: (ctx, i) => _ConversationTile(booking: chats[i]),
+                child: BlocBuilder<ChatUnreadCubit, ChatUnreadState>(
+                  builder: (ctx, unreadState) => ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: chats.length,
+                    separatorBuilder: (context2, i) => const SizedBox(height: 2),
+                    itemBuilder: (ctx2, i) => _ConversationTile(
+                      booking: chats[i],
+                      unread: unreadState.forBooking(chats[i].id),
+                    ),
+                  ),
                 ),
               );
             },
@@ -59,11 +64,15 @@ class LawyerChatTab extends StatelessWidget {
 
 class _ConversationTile extends StatelessWidget {
   final BookingModel booking;
-  const _ConversationTile({required this.booking});
+  final int unread;
+  const _ConversationTile({required this.booking, required this.unread});
+
+  static const _base = 'https://wakeell.microdesk.tech';
 
   @override
   Widget build(BuildContext context) {
-    final initials = (booking.clientName ?? 'C')
+    final name = booking.clientName ?? 'Client';
+    final initials = name
         .split(' ')
         .where((w) => w.isNotEmpty)
         .take(2)
@@ -74,11 +83,14 @@ class _ConversationTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: {
-          'bookingId': booking.id,
-          'otherPartyName': booking.clientName ?? 'Client',
-          'otherPartyAvatar': booking.clientAvatar,
-        }),
+        onTap: () {
+          context.read<ChatUnreadCubit>().markRead(booking.id);
+          Navigator.pushNamed(context, AppRoutes.chat, arguments: {
+            'bookingId': booking.id,
+            'otherPartyName': name,
+            'otherPartyAvatar': booking.clientAvatar,
+          });
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
@@ -87,41 +99,82 @@ class _ConversationTile extends StatelessWidget {
             border: Border.all(color: AppColors.fieldBorder),
           ),
           child: Row(children: [
-            // Avatar
-            Container(
-              width: 48, height: 48,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.purple, AppColors.navy],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            Stack(clipBehavior: Clip.none, children: [
+              _buildAvatar(booking.clientAvatar, initials),
+              if (unread > 0)
+                Positioned(
+                  top: -4, right: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.cyan,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    child: Center(
+                      child: Text(
+                        unread > 99 ? '99+' : '$unread',
+                        style: GoogleFonts.outfit(
+                            fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.navy),
+                      ),
+                    ),
+                  ),
                 ),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(initials,
-                    style: GoogleFonts.outfit(
-                        fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-              ),
-            ),
+            ]),
             const SizedBox(width: 14),
-            // Name + category
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(booking.clientName ?? 'Client',
+              Text(name,
                   style: GoogleFonts.outfit(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      fontSize: 15,
+                      fontWeight: unread > 0 ? FontWeight.w800 : FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 2),
               Text(booking.category.isNotEmpty ? booking.category : 'Legal Consultation',
                   style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary)),
             ])),
-            // Date + chevron
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(_formatDate(booking.date),
-                  style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textSecondary)),
+                  style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      color: unread > 0 ? AppColors.navy : AppColors.textSecondary,
+                      fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w400)),
               const SizedBox(height: 6),
               const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textHint),
             ]),
           ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(String? avatarPath, String initials) {
+    final fallback = Container(
+      width: 48, height: 48,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.purple, AppColors.navy],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(initials,
+            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+      ),
+    );
+
+    if (avatarPath == null || avatarPath.isEmpty) return fallback;
+    final url = avatarPath.startsWith('http') ? avatarPath : '$_base$avatarPath';
+
+    return ClipOval(
+      child: SizedBox(
+        width: 48, height: 48,
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          loadingBuilder: (ctx, child, progress) => progress == null ? child : fallback,
+          errorBuilder: (ctx, err, stack) => fallback,
         ),
       ),
     );
@@ -140,6 +193,8 @@ class _ConversationTile extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
   @override
   Widget build(BuildContext context) {
     return Center(child: Padding(

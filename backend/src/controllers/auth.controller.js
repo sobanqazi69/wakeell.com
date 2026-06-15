@@ -153,6 +153,55 @@ exports.removeMyAvatar = async (req, res) => {
   }
 };
 
+exports.googleAuth = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'token is required' });
+
+    // Verify the ID token with Google's tokeninfo endpoint
+    const infoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+    if (!infoRes.ok) return res.status(401).json({ message: 'Invalid Google token' });
+
+    const payload = await infoRes.json();
+    if (payload.error_description) return res.status(401).json({ message: 'Invalid Google token' });
+
+    const { sub: googleId, email, name, picture } = payload;
+    if (!email) return res.status(401).json({ message: 'Could not get email from Google' });
+
+    // Find by googleId first, then by email
+    let user = await User.findOne({ where: { googleId } });
+
+    if (!user) {
+      user = await User.findOne({ where: { email: email.toLowerCase() } });
+      if (user) {
+        // Existing account — link Google
+        await user.update({ googleId });
+      } else {
+        // New user — create client account
+        const { randomBytes } = require('crypto');
+        user = await User.create({
+          name:       name || email.split('@')[0],
+          email:      email.toLowerCase(),
+          password:   randomBytes(32).toString('hex'),
+          role:       'client',
+          googleId,
+          avatar:     picture || null,
+          isVerified: true,
+          isActive:   true,
+        });
+      }
+    }
+
+    if (!user.isActive) return res.status(403).json({ message: 'Account is disabled' });
+
+    const token = signToken(user.id);
+    return res.json({ token, user });
+  } catch (err) {
+    console.error('[auth.googleAuth]', err);
+    return res.status(500).json({ message: 'Google authentication failed' });
+  }
+};
+
 exports.updateFcmToken = async (req, res) => {
   try {
     const { fcmToken } = req.body;

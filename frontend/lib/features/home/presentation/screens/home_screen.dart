@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../../auth/presentation/cubits/auth_state.dart';
+import '../../../../config/routes/app_routes.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../../client/presentation/screens/client_main_screen.dart';
 import '../../../lawyer/presentation/screens/lawyer_main_screen.dart';
@@ -28,7 +29,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
+    return BlocConsumer<AuthCubit, AuthState>(
+      listenWhen: (previous, current) =>
+          previous is AuthAuthenticated && current is AuthUnauthenticated,
+      listener: (context, state) {
+        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.splash, (_) => false);
+      },
       builder: (context, state) {
         final user = state is AuthAuthenticated
             ? state.user

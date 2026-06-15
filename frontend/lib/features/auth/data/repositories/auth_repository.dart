@@ -219,6 +219,27 @@ class AuthRepository {
     }
   }
 
+  Future<UserModel> loginWithGoogle(String idToken) async {
+    try {
+      final response = await _api.post('/auth/google', data: {'token': idToken});
+      final data = response.data as Map<String, dynamic>;
+      final token = handleNullableStringKey(data, 'token');
+      if (token == null) throw const AuthException('No token received');
+      await _token.saveToken(token);
+      final userJson = handleNullableMapKey(data, 'user');
+      if (userJson == null) throw const AuthException('Invalid response from server');
+      DebugLogger.log(_tag, 'Google login success: ${userJson['email']}');
+      return UserModel.fromJson(userJson);
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'loginWithGoogle DioException: ${e.message}');
+      throw AuthException(_extractMessage(e) ?? 'Google sign-in failed');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      DebugLogger.error(_tag, 'loginWithGoogle error: $e');
+      throw const AuthException('Google sign-in failed');
+    }
+  }
+
   Future<void> logout() async {
     await _token.clearToken();
     DebugLogger.log(_tag, 'Logged out');

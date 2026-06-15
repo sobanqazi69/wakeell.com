@@ -6,6 +6,7 @@ const upload = require('../middleware/upload');
 router.post('/register', ctrl.register);
 router.post('/register/lawyer', upload.single('avatar'), ctrl.registerLawyer);
 router.post('/login', ctrl.login);
+router.post('/google', ctrl.googleAuth);
 router.get('/me', protect, ctrl.getMe);
 router.patch('/me', protect, ctrl.updateMe);
 router.patch('/me/avatar', protect, upload.single('avatar'), ctrl.uploadMyAvatar);

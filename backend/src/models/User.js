@@ -12,6 +12,7 @@ const User = sequelize.define('User', {
   phone:        { type: DataTypes.STRING(50),  allowNull: true, defaultValue: null },
   location:     { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
   jurisdiction: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
+  googleId:     { type: DataTypes.STRING(255), allowNull: true, defaultValue: null, unique: true },
   isVerified:   { type: DataTypes.BOOLEAN, defaultValue: false },
   isActive:     { type: DataTypes.BOOLEAN, defaultValue: true },
   fcmToken:     { type: DataTypes.STRING(500), allowNull: true, defaultValue: null },

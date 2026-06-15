@@ -13,6 +13,7 @@ class ChatCubit extends Cubit<ChatState> {
   final int bookingId;
   final int currentUserId;
   final String currentUserName;
+  late final Function(dynamic) _msgHandler;
 
   ChatCubit({
     required ChatRepository repo,
@@ -32,7 +33,7 @@ class ChatCubit extends Cubit<ChatState> {
 
       _socket.emit('chat:join', {'bookingId': bookingId});
 
-      _socket.on('chat:message', (data) {
+      _msgHandler = (data) {
         try {
           final msg = ChatMessageModel.fromJson(
             Map<String, dynamic>.from(data as Map),
@@ -65,7 +66,8 @@ class ChatCubit extends Cubit<ChatState> {
         } catch (e) {
           DebugLogger.error(_tag, 'chat:message parse error: $e');
         }
-      });
+      };
+      _socket.on('chat:message', _msgHandler);
     } catch (e) {
       DebugLogger.error(_tag, 'init: $e');
       if (!isClosed) emit(ChatError(e.toString()));
@@ -116,7 +118,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   @override
   Future<void> close() {
-    _socket.off('chat:message');
+    _socket.offHandler('chat:message', _msgHandler);
     return super.close();
   }
 }

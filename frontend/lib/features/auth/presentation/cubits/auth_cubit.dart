@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/socket_service.dart';
@@ -12,6 +13,10 @@ import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   static const String _tag = 'AuthCubit';
+  // Web OAuth 2.0 Client ID from Google Cloud Console (for idToken issuance)
+  static const String _googleServerClientId =
+      'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+  static bool _googleInitialized = false;
 
   final AuthRepository _repo;
   UserModel? currentUser;
@@ -126,6 +131,42 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       DebugLogger.error(_tag, 'registerLawyer error: $e');
       if (!isClosed) emit(const AuthError('Registration failed. Please try again.'));
+    }
+  }
+
+  Future<void> _ensureGoogleInit() async {
+    if (_googleInitialized) return;
+    await GoogleSignIn.instance.initialize(
+      serverClientId: _googleServerClientId,
+    );
+    _googleInitialized = true;
+  }
+
+  Future<void> loginWithGoogle() async {
+    try {
+      await _ensureGoogleInit();
+
+      final account = await GoogleSignIn.instance.authenticate();
+      final idToken = account.authentication.idToken;
+      if (idToken == null) {
+        DebugLogger.error(_tag, 'loginWithGoogle: idToken is null');
+        if (!isClosed) emit(const AuthError('Failed to get Google credentials'));
+        return;
+      }
+
+      if (!isClosed) emit(const AuthLoading());
+
+      final user = await _repo.loginWithGoogle(idToken);
+      currentUser = user;
+      if (!isClosed) emit(AuthAuthenticated(user));
+      PushNotificationService.init(getIt<ApiClient>());
+      _connectSocket();
+    } on AuthException catch (e) {
+      DebugLogger.error(_tag, 'loginWithGoogle AuthException: ${e.message}');
+      if (!isClosed) emit(AuthError(e.message));
+    } catch (e) {
+      DebugLogger.error(_tag, 'loginWithGoogle error: $e');
+      if (!isClosed) emit(const AuthError('Google sign-in failed. Please try again.'));
     }
   }
 

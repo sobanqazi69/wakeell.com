@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../config/routes/app_routes.dart';
 import '../../../../config/theme/app_colors.dart';
+import '../../../../core/network/socket_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../auth/presentation/cubits/auth_cubit.dart';
-import '../../../auth/presentation/cubits/auth_state.dart';
 import '../../../booking/data/repositories/booking_repository.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
+import '../../../chat/presentation/cubits/chat_unread_cubit.dart';
 import 'lawyer_home_tab.dart';
 import 'lawyer_bookings_tab.dart';
 import 'lawyer_chat_tab.dart';
@@ -27,17 +27,15 @@ class _LawyerMainScreenState extends State<LawyerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (state is AuthUnauthenticated) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.splash, (_) => false);
-        }
-      },
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => LawyerBookingsCubit(getIt<BookingRepository>())..load()),
-        ],
-        child: Scaffold(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => LawyerBookingsCubit(getIt<BookingRepository>())..load()),
+        BlocProvider(create: (ctx) => ChatUnreadCubit(
+          getIt<SocketService>(),
+          ctx.read<AuthCubit>().currentUser?.id ?? 0,
+        )),
+      ],
+      child: Scaffold(
           backgroundColor: AppColors.bg,
           body: IndexedStack(
             index: _index,
@@ -68,10 +66,11 @@ class _LawyerMainScreenState extends State<LawyerMainScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }
+
+
 
 class _NavItem extends StatelessWidget {
   final IconData icon;

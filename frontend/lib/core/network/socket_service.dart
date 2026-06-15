@@ -73,5 +73,8 @@ class SocketService {
 
   void off(String event) => _socket?.off(event);
 
+  void offHandler(String event, Function(dynamic) handler) =>
+      _socket?.off(event, handler);
+
   bool get isConnected => _socket?.connected ?? false;
 }
