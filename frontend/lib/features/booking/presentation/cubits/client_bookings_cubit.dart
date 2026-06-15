@@ -25,6 +25,18 @@ class ClientBookingsCubit extends Cubit<ClientBookingsState> {
 
   Future<void> refresh() => load();
 
+  /// One entry per lawyer (most-recent completed booking), sorted newest first.
+  List<BookingModel> get completedBookings {
+    final byLawyer = <int, BookingModel>{};
+    for (final b in _all.where((b) => b.status == 'completed')) {
+      final existing = byLawyer[b.lawyerId];
+      if (existing == null || b.date.compareTo(existing.date) > 0) {
+        byLawyer[b.lawyerId] = b;
+      }
+    }
+    return byLawyer.values.toList()..sort((a, b) => b.date.compareTo(a.date));
+  }
+
   void onFilterChanged(String filter) {
     if (isClosed) return;
     final filtered = filter == 'all'

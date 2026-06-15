@@ -100,13 +100,7 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (state is AuthUnauthenticated) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.splash, (_) => false);
-        }
-      },
-      child: BlocBuilder<AuthCubit, AuthState>(
+    return BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
           final user = context.read<AuthCubit>().currentUser;
 
@@ -338,7 +332,6 @@ class _ClientDashboardBodyState extends State<_ClientDashboardBody> {
             ),
           );
         },
-      ),
     );
   }
 }
@@ -378,7 +371,7 @@ class _ClientDrawer extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: avatarUrl.isNotEmpty
                     ? Image.network(avatarUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Center(child: Text(
+                        errorBuilder: (ctx2, err, stack) => Center(child: Text(
                           _initials(user?.name ?? ''),
                           style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white))))
                     : Center(child: Text(

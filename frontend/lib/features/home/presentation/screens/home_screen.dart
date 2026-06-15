@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../../auth/presentation/cubits/auth_state.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
-import '../../../client/presentation/screens/client_dashboard_screen.dart';
+import '../../../client/presentation/screens/client_main_screen.dart';
 import '../../../lawyer/presentation/screens/lawyer_main_screen.dart';
 import '../../../notifications/presentation/cubits/notifications_cubit.dart';
 
@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
           case 'lawyer':
             return const LawyerMainScreen();
           default:
-            return const ClientDashboardScreen();
+            return const ClientMainScreen();
         }
       },
     );

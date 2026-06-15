@@ -90,7 +90,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           const Icon(Icons.check_circle_outline, color: AppColors.cyan, size: 64),
           const SizedBox(height: 20),
           Text('Already Reviewed',
-              style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+              style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 8),
           Text('You already rated this session ${state.review.rating} stars',
               textAlign: TextAlign.center,
@@ -140,7 +140,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           const SizedBox(height: 4),
           Center(
             child: Text(widget.lawyerName,
-                style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+                style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           ),
           const SizedBox(height: 32),
 
@@ -187,7 +187,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               controller: _commentCtrl,
               maxLines: 4,
               maxLength: 500,
-              style: GoogleFonts.outfit(fontSize: 14, color: Colors.white),
+              style: GoogleFonts.outfit(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Share your experience with this lawyer…',
                 hintStyle: GoogleFonts.outfit(fontSize: 14, color: AppColors.textSecondary),
@@ -255,15 +255,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
         child: Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: AppColors.fieldBorder,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.close, color: Colors.white, size: 18),
+          child: const Icon(Icons.close, color: AppColors.textPrimary, size: 18),
         ),
       ),
       const SizedBox(width: 12),
       Text('Rate Your Session',
-          style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white)),
+          style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
     ]);
   }
 

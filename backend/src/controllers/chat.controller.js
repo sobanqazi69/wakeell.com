@@ -1,4 +1,5 @@
 const { ChatMessage, Booking, User } = require('../models');
+const notifService = require('../services/notification.service');
 let _io = null;
 exports.setIo = (io) => { _io = io; };
 
@@ -57,6 +58,18 @@ exports.sendMessage = async (req, res) => {
 
     // Push to anyone else in the chat room via socket (real-time delivery).
     if (_io) _io.to(`chat_${bookingId}`).emit('chat:message', payload);
+
+    // FCM push notification to the OTHER party when the app is backgrounded/closed.
+    const recipientId = req.user.id === booking.clientId ? booking.lawyerId : booking.clientId;
+    const senderName = sender.name || 'Someone';
+    const preview = msg.message.length > 80 ? msg.message.substring(0, 80) + '…' : msg.message;
+    notifService.send(
+      recipientId,
+      `New message from ${senderName}`,
+      preview,
+      'chat_message',
+      { bookingId: String(booking.id), senderId: String(req.user.id) },
+    ).catch((e) => console.error('[chat.sendMessage] notif error:', e));
 
     return res.status(201).json({ message: payload });
   } catch (err) {
