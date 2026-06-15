@@ -10,6 +10,8 @@ import '../../../notifications/presentation/cubits/notifications_state.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_state.dart';
 import '../../../booking/data/models/booking_model.dart';
+import '../cubits/lawyer_profile_cubit.dart';
+import '../cubits/lawyer_profile_state.dart';
 
 class LawyerHomeTab extends StatelessWidget {
   final void Function(int) onNavigate;
@@ -27,6 +29,21 @@ class LawyerHomeTab extends StatelessWidget {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         final user = context.read<AuthCubit>().currentUser;
+
+        return BlocBuilder<LawyerProfileCubit, LawyerProfileState>(
+          builder: (context, profileState) {
+            final lawyer = switch (profileState) {
+              LawyerProfileLoaded s       => s.lawyer,
+              LawyerProfileSaving s       => s.lawyer,
+              LawyerProfileAvatarUpdating s => s.lawyer,
+              _ => null,
+            };
+
+        return BlocBuilder<LawyerBookingsCubit, LawyerBookingsState>(
+          builder: (context, bookingState) {
+            final bookings = bookingState is LawyerBookingsLoaded ? bookingState.bookings : <BookingModel>[];
+            final totalSessions = bookings.length;
+            final uniqueClients = bookings.map((b) => b.clientId).toSet().length;
 
         return CustomScrollView(
           slivers: [
@@ -123,11 +140,11 @@ class LawyerHomeTab extends StatelessWidget {
                   ]),
                   const SizedBox(height: 22),
                   Row(children: [
-                    _HeroStat(icon: Icons.people_outline_rounded, label: 'Clients', value: '0'),
+                    _HeroStat(icon: Icons.people_outline_rounded, label: 'Clients', value: '$uniqueClients'),
                     const SizedBox(width: 10),
-                    _HeroStat(icon: Icons.video_call_outlined, label: 'Sessions', value: '0'),
+                    _HeroStat(icon: Icons.video_call_outlined, label: 'Sessions', value: '$totalSessions'),
                     const SizedBox(width: 10),
-                    _HeroStat(icon: Icons.star_rounded, label: 'Rating', value: '—'),
+                    _HeroStat(icon: Icons.star_rounded, label: 'Rating', value: lawyer?.ratingDisplay ?? '—'),
                   ]),
                 ]),
               ),
@@ -143,15 +160,20 @@ class LawyerHomeTab extends StatelessWidget {
                   _QuickAction(icon: Icons.schedule_outlined, label: 'Availability', color: const Color(0xFF0D9488), onTap: () => Navigator.pushNamed(context, AppRoutes.lawyerAvailability)),
                   const SizedBox(width: 12),
                   _QuickAction(icon: Icons.person_outline_rounded, label: 'Edit Profile', color: AppColors.navy, onTap: () => Navigator.pushNamed(context, AppRoutes.lawyerProfileEdit)),
-                  const SizedBox(width: 12),
-                  _QuickAction(icon: Icons.bar_chart_rounded, label: 'Analytics', color: const Color(0xFF7C3AED), onTap: () {}),
-                  const SizedBox(width: 12),
-                  _QuickAction(icon: Icons.star_border_rounded, label: 'Reviews', color: const Color(0xFFD97706), onTap: () {}),
+                  // const SizedBox(width: 12),
+                  // _QuickAction(icon: Icons.bar_chart_rounded, label: 'Analytics', color: const Color(0xFF7C3AED), onTap: () {}),
+                  // const SizedBox(width: 12),
+                  // _QuickAction(icon: Icons.star_border_rounded, label: 'Reviews', color: const Color(0xFFD97706),
+                  //   onTap: () {
+                  //     if (lawyer != null) {
+                  //       Navigator.pushNamed(context, AppRoutes.lawyerDetail, arguments: lawyer.id);
+                  //     }
+                  //   }),
                 ]),
                 const SizedBox(height: 24),
 
                 // ── Earnings card ────────────────────────────────────────
-                _EarningsCard(),
+                _EarningsCard(bookings: bookings, hourlyRate: lawyer?.hourlyRate ?? 0),
                 const SizedBox(height: 16),
 
                 // ── Today's schedule ─────────────────────────────────────
@@ -162,11 +184,11 @@ class LawyerHomeTab extends StatelessWidget {
                 _SectionTitle('This Month'),
                 const SizedBox(height: 12),
                 Row(children: [
-                  Expanded(child: _MiniStat(label: 'Bookings', value: '0', icon: Icons.calendar_month_outlined, color: AppColors.navy)),
+                  Expanded(child: _MiniStat(label: 'Bookings', value: '$totalSessions', icon: Icons.calendar_month_outlined, color: AppColors.navy)),
                   const SizedBox(width: 10),
-                  Expanded(child: _MiniStat(label: 'Completed', value: '0', icon: Icons.check_circle_outline_rounded, color: const Color(0xFF16A34A))),
+                  Expanded(child: _MiniStat(label: 'Completed', value: '${bookings.where((b) => b.status == 'completed').length}', icon: Icons.check_circle_outline_rounded, color: const Color(0xFF16A34A))),
                   const SizedBox(width: 10),
-                  Expanded(child: _MiniStat(label: 'Pending', value: '0', icon: Icons.hourglass_bottom_outlined, color: const Color(0xFFD97706))),
+                  Expanded(child: _MiniStat(label: 'Pending', value: '${bookings.where((b) => b.status == 'pending').length}', icon: Icons.hourglass_bottom_outlined, color: const Color(0xFFD97706))),
                 ]),
                 const SizedBox(height: 16),
 
@@ -177,6 +199,8 @@ class LawyerHomeTab extends StatelessWidget {
             ),
           ],
         );
+          }); // LawyerBookingsCubit builder
+          }); // LawyerProfileCubit builder
       },
     );
   }
@@ -221,9 +245,30 @@ class _QuickAction extends StatelessWidget {
 }
 
 class _EarningsCard extends StatelessWidget {
-  const _EarningsCard();
+  final List<BookingModel> bookings;
+  final double hourlyRate;
+  const _EarningsCard({required this.bookings, required this.hourlyRate});
+
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final thisMonthCompleted = bookings.where((b) {
+      if (b.status != 'completed') return false;
+      try {
+        final parts = b.date.split('-');
+        if (parts.length < 3) return false;
+        return int.parse(parts[0]) == now.year && int.parse(parts[1]) == now.month;
+      } catch (_) { return false; }
+    }).toList();
+
+    // Earnings = hourlyRate × (duration in hours) per completed session
+    final totalEarnings = thisMonthCompleted.fold<double>(
+      0, (sum, b) => sum + hourlyRate * (b.duration / 60),
+    );
+    final earningsStr = totalEarnings == 0
+        ? 'PKR 0'
+        : 'PKR ${totalEarnings.toStringAsFixed(0)}';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -234,11 +279,15 @@ class _EarningsCard extends StatelessWidget {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Total Earnings', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
           const SizedBox(height: 4),
-          Text('PKR 0', style: GoogleFonts.outfit(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text(earningsStr, style: GoogleFonts.outfit(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
           const SizedBox(height: 6),
           Row(children: [
-            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-              child: Text('This month', style: GoogleFonts.outfit(fontSize: 10, color: const Color(0xFF4ADE80), fontWeight: FontWeight.w600))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+              child: Text('${thisMonthCompleted.length} session${thisMonthCompleted.length == 1 ? '' : 's'} this month',
+                style: GoogleFonts.outfit(fontSize: 10, color: const Color(0xFF4ADE80), fontWeight: FontWeight.w600)),
+            ),
           ]),
         ])),
         Container(

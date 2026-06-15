@@ -8,6 +8,8 @@ import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../../booking/data/repositories/booking_repository.dart';
 import '../../../booking/presentation/cubits/lawyer_bookings_cubit.dart';
 import '../../../chat/presentation/cubits/chat_unread_cubit.dart';
+import '../../data/repositories/lawyer_repository.dart';
+import '../cubits/lawyer_profile_cubit.dart';
 import 'lawyer_home_tab.dart';
 import 'lawyer_bookings_tab.dart';
 import 'lawyer_chat_tab.dart';
@@ -29,6 +31,7 @@ class _LawyerMainScreenState extends State<LawyerMainScreen> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider(create: (_) => LawyerProfileCubit(getIt<LawyerRepository>(), getIt())..load()),
         BlocProvider(create: (_) => LawyerBookingsCubit(getIt<BookingRepository>())..load()),
         BlocProvider(create: (ctx) => ChatUnreadCubit(
           getIt<SocketService>(),
