@@ -72,13 +72,27 @@ exports.getLawyerById = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { specializations, bio, languages, hourlyRate, experience, education } = req.body;
+    const { specializations, bio, languages, hourlyRate, experience } = req.body;
 
     const profile = await Lawyer.findOne({ where: { userId: req.user.id } });
     if (!profile) return res.status(404).json({ message: 'Lawyer profile not found' });
 
-    await profile.update({ specializations, bio, languages, hourlyRate, experience, education });
-    return res.json({ profile });
+    const updates = {};
+    if (bio !== undefined) updates.bio = bio;
+    if (hourlyRate !== undefined) updates.hourlyRate = Number(hourlyRate);
+    if (experience !== undefined) updates.experience = parseInt(experience, 10);
+    // Ensure these are always stored as real arrays, never as JSON strings
+    if (Array.isArray(specializations)) updates.specializations = specializations;
+    if (Array.isArray(languages)) updates.languages = languages;
+
+    await profile.update(updates);
+
+    // Re-fetch with user include so the response is a complete LawyerModel
+    const updated = await Lawyer.findOne({
+      where: { userId: req.user.id },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'avatar', 'location', 'jurisdiction', 'phone'] }],
+    });
+    return res.json({ profile: updated });
   } catch (err) {
     console.error('[lawyer.updateProfile]', err);
     return res.status(500).json({ message: 'Failed to update profile' });
