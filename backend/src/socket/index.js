@@ -1,5 +1,16 @@
 const jwt = require('jsonwebtoken');
 const { Session, Booking, ChatMessage, User } = require('../models');
+const notifService = require('../services/notification.service');
+
+function isUserActiveInChat(io, userId, bookingId) {
+  const room = io.sockets.adapter.rooms.get(`chat_${bookingId}`);
+  if (!room) return false;
+  for (const socketId of room) {
+    const s = io.sockets.sockets.get(socketId);
+    if (s && s.userId === userId) return true;
+  }
+  return false;
+}
 
 module.exports = (io) => {
   // Authenticate socket via token in handshake
@@ -100,6 +111,20 @@ module.exports = (io) => {
           createdAt:  msg.createdAt,
           sender:     { id: sender.id, name: sender.name, avatar: sender.avatar },
         });
+
+        // FCM push — only if recipient doesn't have this chat open.
+        const recipientId = socket.userId === booking.clientId ? booking.lawyerId : booking.clientId;
+        if (!isUserActiveInChat(io, recipientId, bookingId)) {
+          const senderName = sender.name || 'Someone';
+          const preview = msg.message.length > 80 ? msg.message.substring(0, 80) + '…' : msg.message;
+          notifService.send(
+            recipientId,
+            `New message from ${senderName}`,
+            preview,
+            'chat_message',
+            { bookingId: String(booking.id), senderId: String(socket.userId) },
+          ).catch((e) => console.error('[socket.chat:send] notif error:', e));
+        }
       } catch (err) {
         console.error('[socket.chat:send]', err.message);
       }

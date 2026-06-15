@@ -7,7 +7,7 @@ const Notification = sequelize.define('Notification', {
   title:  { type: DataTypes.STRING(255), allowNull: false },
   body:   { type: DataTypes.TEXT, allowNull: false },
   type: {
-    type: DataTypes.ENUM('booking_new', 'booking_accepted', 'booking_declined', 'reminder'),
+    type: DataTypes.ENUM('booking_new', 'booking_accepted', 'booking_declined', 'reminder', 'chat_message'),
     defaultValue: 'booking_new',
   },
   data:   { type: DataTypes.JSON, defaultValue: {} },
