@@ -34,15 +34,20 @@ class LawyerListCubit extends Cubit<LawyerListState> {
   }
 
   void onSortChanged(String sort) {
+    final wasNearMe = _sort == 'near_me';
     _sort = sort;
     if (sort != 'near_me') _nearMeCity = '';
-    _applySort();
+    if (wasNearMe) {
+      _fetch(); // re-fetch without location filter
+    } else {
+      _applySort();
+    }
   }
 
   void onNearMeFilter(String city) {
     _nearMeCity = city;
     _sort = 'near_me';
-    _applySort();
+    _fetch(); // re-fetch with location filter sent to backend
   }
 
   void applyFilters({required double minRating, required double maxFee}) {
@@ -61,6 +66,7 @@ class LawyerListCubit extends Cubit<LawyerListState> {
       _fullResults = await _repo.getLawyers(
         search:   _search.isEmpty ? null : _search,
         category: _category,
+        location: _sort == 'near_me' && _nearMeCity.isNotEmpty ? _nearMeCity : null,
       );
 
       _applySort();
@@ -81,13 +87,6 @@ class LawyerListCubit extends Cubit<LawyerListState> {
         result.sort((a, b) => b.rating.compareTo(a.rating));
       case 'low_fee':
         result.sort((a, b) => a.hourlyRate.compareTo(b.hourlyRate));
-      case 'near_me':
-        if (_nearMeCity.isNotEmpty) {
-          result = result.where((l) {
-            final loc = l.location?.toLowerCase() ?? '';
-            return loc.contains(_nearMeCity.toLowerCase());
-          }).toList();
-        }
     }
 
     if (_minRating > 0) {

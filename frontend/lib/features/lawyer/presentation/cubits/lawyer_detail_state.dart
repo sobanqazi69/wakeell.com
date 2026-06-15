@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../data/models/lawyer_model.dart';
+import '../../data/models/review_model.dart';
 
 abstract class LawyerDetailState extends Equatable {
   const LawyerDetailState();
@@ -12,9 +13,10 @@ class LawyerDetailLoading extends LawyerDetailState { const LawyerDetailLoading(
 
 class LawyerDetailLoaded extends LawyerDetailState {
   final LawyerModel lawyer;
-  const LawyerDetailLoaded(this.lawyer);
+  final List<ReviewModel> reviews;
+  const LawyerDetailLoaded(this.lawyer, [this.reviews = const []]);
   @override
-  List<Object?> get props => [lawyer];
+  List<Object?> get props => [lawyer, reviews];
 }
 
 class LawyerDetailError extends LawyerDetailState {

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../config/routes/app_routes.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/utils/debug_logger.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../data/models/lawyer_model.dart';
 import '../cubits/lawyer_list_cubit.dart';
 import '../cubits/lawyer_list_state.dart';
@@ -30,9 +29,7 @@ class LawyersListScreen extends StatefulWidget {
 }
 
 class _LawyersListScreenState extends State<LawyersListScreen> {
-  static const _tag = 'LawyersListScreen';
   final _searchCtrl = TextEditingController();
-  bool _locating = false;
 
   @override
   void initState() {
@@ -46,64 +43,13 @@ class _LawyersListScreenState extends State<LawyersListScreen> {
     super.dispose();
   }
 
-  Future<void> _handleNearMe() async {
-    try {
-      setState(() => _locating = true);
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.deniedForever ||
-          permission == LocationPermission.denied) {
-        if (mounted) {
-          setState(() => _locating = false);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Location permission denied.',
-                style: GoogleFonts.outfit(color: Colors.white)),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ));
-        }
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.medium,
-              timeLimit: Duration(seconds: 10)));
-      final placemarks =
-          await placemarkFromCoordinates(pos.latitude, pos.longitude);
-      final city = placemarks.firstOrNull?.locality ??
-          placemarks.firstOrNull?.subAdministrativeArea ??
-          '';
-
-      if (!mounted) return;
-      setState(() => _locating = false);
-
-      if (city.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not determine your city',
-              style: GoogleFonts.outfit(color: Colors.white)),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ));
-        return;
-      }
-
-      context.read<LawyerListCubit>().onNearMeFilter(city);
-    } catch (e) {
-      DebugLogger.error(_tag, 'nearMe: $e');
-      if (mounted) {
-        setState(() => _locating = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not get your location',
-              style: GoogleFonts.outfit(color: Colors.white)),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ));
-      }
+  void _handleNearMe() {
+    final city = context.read<AuthCubit>().currentUser?.location ?? '';
+    if (city.isEmpty) {
+      AppSnackbar.info(context, 'Set your city in your profile to use this filter');
+      return;
     }
+    context.read<LawyerListCubit>().onNearMeFilter(city);
   }
 
   void _showFilterSheet(LawyerListLoaded state) {
@@ -324,20 +270,16 @@ class _LawyersListScreenState extends State<LawyersListScreen> {
                             .onSortChanged('low_fee')),
                     const SizedBox(width: 8),
                     _SortChip(
-                      label: _locating ? '…' : '📍 Near Me',
+                      label: '📍 Near Me',
                       value: 'near_me',
                       activeSort: activeSort,
-                      onTap: _locating
-                          ? null
-                          : () {
-                              if (activeSort == 'near_me') {
-                                context
-                                    .read<LawyerListCubit>()
-                                    .onSortChanged('all');
-                              } else {
-                                _handleNearMe();
-                              }
-                            },
+                      onTap: () {
+                        if (activeSort == 'near_me') {
+                          context.read<LawyerListCubit>().onSortChanged('all');
+                        } else {
+                          _handleNearMe();
+                        }
+                      },
                     ),
                   ]),
                 );

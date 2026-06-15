@@ -4,6 +4,7 @@ import '../../../../../core/network/api_client.dart';
 import '../../../../../core/utils/debug_logger.dart';
 import '../../../../../core/utils/map_utils.dart';
 import '../models/lawyer_model.dart';
+import '../models/review_model.dart';
 
 class LawyerException implements Exception {
   final String message;
@@ -19,6 +20,7 @@ class LawyerRepository {
   Future<List<LawyerModel>> getLawyers({
     String? search,
     String? category,
+    String? location,
     int page = 1,
     int limit = 20,
   }) async {
@@ -26,6 +28,7 @@ class LawyerRepository {
       final res = await _api.get('/lawyers', params: {
         if (search != null && search.isNotEmpty) 'search': search,
         if (category != null && category != 'All') 'category': category,
+        if (location != null && location.isNotEmpty) 'location': location,
         'page': page,
         'limit': limit,
       });
@@ -154,6 +157,21 @@ class LawyerRepository {
     } catch (e) {
       DebugLogger.error(_tag, 'getLawyerById unexpected: $e');
       throw const LawyerException('Failed to load profile');
+    }
+  }
+
+  Future<List<ReviewModel>> getLawyerReviews(int lawyerId) async {
+    try {
+      final res = await _api.get('/reviews/lawyer/$lawyerId');
+      final data = res.data as Map<String, dynamic>;
+      final list = handleNullableListKey(data, 'reviews') ?? [];
+      return list.whereType<Map<String, dynamic>>().map(ReviewModel.fromJson).toList();
+    } on DioException catch (e) {
+      DebugLogger.error(_tag, 'getLawyerReviews: ${e.message}');
+      return [];
+    } catch (e) {
+      DebugLogger.error(_tag, 'getLawyerReviews unexpected: $e');
+      return [];
     }
   }
 

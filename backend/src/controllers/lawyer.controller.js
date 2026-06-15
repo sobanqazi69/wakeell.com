@@ -3,7 +3,7 @@ const { Lawyer, User, LawyerAvailability } = require('../models');
 
 exports.getLawyers = async (req, res) => {
   try {
-    const { search, category, language, minRating, page = 1, limit = 20 } = req.query;
+    const { search, category, language, minRating, location, page = 1, limit = 20 } = req.query;
 
     const where = { status: 'approved', hourlyRate: { [Op.gt]: 0 } };
     if (minRating) where.rating = { [Op.gte]: Number(minRating) };
@@ -11,6 +11,9 @@ exports.getLawyers = async (req, res) => {
     const userWhere = {};
     if (search && search.trim()) {
       userWhere.name = { [Op.like]: `%${search.trim()}%` };
+    }
+    if (location && location.trim()) {
+      userWhere.location = { [Op.like]: `%${location.trim()}%` };
     }
 
     const lawyers = await Lawyer.findAll({
