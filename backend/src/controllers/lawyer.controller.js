@@ -5,7 +5,7 @@ exports.getLawyers = async (req, res) => {
   try {
     const { search, category, language, minRating, page = 1, limit = 20 } = req.query;
 
-    const where = { status: 'approved' };
+    const where = { status: 'approved', hourlyRate: { [Op.gt]: 0 } };
     if (minRating) where.rating = { [Op.gte]: Number(minRating) };
 
     const userWhere = {};
