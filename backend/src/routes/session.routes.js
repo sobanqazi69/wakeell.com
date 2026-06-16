@@ -8,5 +8,6 @@ router.get('/:bookingId', ctrl.getSession);
 router.post('/:bookingId/token', ctrl.joinToken);        // returns LiveKit JWT + wsUrl
 router.patch('/:bookingId/end', ctrl.endSession);
 router.patch('/:bookingId/summary', ctrl.writeAdviceSummary);
+router.get('/:bookingId/recording', ctrl.getRecording);  // returns presigned MinIO URL
 
 module.exports = router;

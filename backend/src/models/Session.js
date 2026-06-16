@@ -12,6 +12,8 @@ const Session = sequelize.define('Session', {
   adviceSummary:  { type: DataTypes.TEXT, defaultValue: '' },
   summaryWritten: { type: DataTypes.BOOLEAN, defaultValue: false },
   status:         { type: DataTypes.ENUM('waiting', 'active', 'ended'), defaultValue: 'waiting' },
+  egressId:       { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
+  recordingKey:   { type: DataTypes.STRING(500), allowNull: true, defaultValue: null },
 }, {
   tableName: 'sessions',
   underscored: true,

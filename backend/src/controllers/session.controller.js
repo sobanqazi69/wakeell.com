@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { AccessToken } = require('livekit-server-sdk');
 const { Session, Booking, User } = require('../models');
+const egressService = require('../services/egress.service');
 
 // Socket.io instance — set by index.js after server starts
 let _io = null;
@@ -143,6 +144,18 @@ exports.joinToken = async (req, res) => {
 
     if (!session.startedAt && session.clientJoined && session.lawyerJoined) {
       await session.update({ status: 'active', startedAt: new Date() });
+      await session.reload();
+
+      // Start recording as soon as both parties are connected — fire and forget
+      if (!session.egressId) {
+        egressService.startRecording(session.roomId, session.id, booking.sessionType)
+          .then(async (result) => {
+            if (result) {
+              await session.update({ egressId: result.egressId, recordingKey: result.recordingKey });
+            }
+          })
+          .catch((e) => console.error('[session.joinToken] startRecording:', e.message));
+      }
     }
 
     // If the client just joined for the first time and the lawyer hasn't arrived,
@@ -183,12 +196,40 @@ exports.endSession = async (req, res) => {
     if (booking.status !== 'completed') {
       await booking.update({ status: 'completed', endedAt: new Date() });
       await session.update({ status: 'ended', endedAt: new Date() });
+
+      // Stop the egress recording — LiveKit Egress will upload the file to MinIO
+      if (session.egressId) {
+        egressService.stopRecording(session.egressId).catch(() => {});
+      }
     }
 
     return res.json({ message: 'Session ended' });
   } catch (err) {
     console.error('[session.endSession]', err);
     return res.status(500).json({ message: 'Failed to end session' });
+  }
+};
+
+exports.getRecording = async (req, res) => {
+  try {
+    const booking = await Booking.findByPk(req.params.bookingId);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const isParty = booking.clientId === req.user.id || booking.lawyerId === req.user.id;
+    if (!isParty) return res.status(403).json({ message: 'Access denied' });
+
+    const session = await Session.findOne({ where: { bookingId: booking.id } });
+    if (!session?.recordingKey) {
+      return res.status(404).json({ message: 'No recording available for this session' });
+    }
+
+    const url = await egressService.getPresignedUrl(session.recordingKey);
+    if (!url) return res.status(500).json({ message: 'Could not generate recording URL' });
+
+    return res.json({ url, recordingKey: session.recordingKey });
+  } catch (err) {
+    console.error('[session.getRecording]', err);
+    return res.status(500).json({ message: 'Failed to fetch recording' });
   }
 };
 

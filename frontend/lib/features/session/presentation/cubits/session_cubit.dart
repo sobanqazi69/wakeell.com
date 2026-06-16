@@ -21,7 +21,9 @@ class SessionCubit extends Cubit<SessionState> {
 
   SessionCubit(this._repo, this._socket) : super(const SessionInitial());
 
-  /// Called by the screen when LiveKit fires ParticipantConnectedEvent
+  /// Called by the screen when LiveKit fires ParticipantConnectedEvent.
+  /// Marks that the other party joined (unlocks endSession) and starts the
+  /// recording indicator — recording begins on the backend at this moment.
   void notifyRemoteJoined() {
     _remoteEverJoined = true;
   }

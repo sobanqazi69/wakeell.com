@@ -14,6 +14,21 @@ class SessionRepository {
 
   const SessionRepository(this._api);
 
+  Future<String?> getRecordingUrl(int bookingId) async {
+    try {
+      final res = await _api.get('/sessions/$bookingId/recording');
+      final data = res.data as Map<String, dynamic>;
+      return data['url'] as String?;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null; // no recording yet
+      DebugLogger.error(_tag, 'getRecordingUrl: ${e.message}');
+      return null;
+    } catch (e) {
+      DebugLogger.error(_tag, 'getRecordingUrl unexpected: $e');
+      return null;
+    }
+  }
+
   Future<void> endSession(int bookingId) async {
     try {
       await _api.patch('/sessions/$bookingId/end', data: {});

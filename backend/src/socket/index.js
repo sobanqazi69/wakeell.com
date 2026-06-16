@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { Session, Booking, ChatMessage, User } = require('../models');
 const notifService = require('../services/notification.service');
+const egressService = require('../services/egress.service');
 
 function isUserActiveInChat(io, userId, bookingId) {
   const room = io.sockets.adapter.rooms.get(`chat_${bookingId}`);
@@ -66,6 +67,10 @@ module.exports = (io) => {
         const endedAt = new Date();
         await session.update({ endedAt, status: 'ended' });
         await Booking.update({ endedAt, status: 'completed' }, { where: { id: session.bookingId } });
+
+        if (session.egressId) {
+          egressService.stopRecording(session.egressId).catch(() => {});
+        }
 
         io.to(roomId).emit('room_closed', { endedAt });
       } catch (err) {
