@@ -60,6 +60,8 @@ module.exports = (io) => {
       try {
         const session = await Session.findOne({ where: { roomId } });
         if (!session) return;
+        // Only end if session was actually active (both parties connected)
+        if (session.status !== 'active') return;
 
         const endedAt = new Date();
         await session.update({ endedAt, status: 'ended' });

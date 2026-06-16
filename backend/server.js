@@ -52,6 +52,7 @@ app.use(errorHandler);
 
 socketHandler(io);
 require('./src/controllers/chat.controller').setIo(io);
+require('./src/controllers/session.controller').setIo(io);
 
 const PORT = process.env.PORT || 3004;
 const isDev = process.env.NODE_ENV === 'development';

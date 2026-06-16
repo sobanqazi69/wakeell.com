@@ -57,3 +57,10 @@ class SessionEnded extends SessionState {
   @override
   List<Object?> get props => [bookingId];
 }
+
+class SessionAutoCancelled extends SessionState {
+  final String reason;
+  const SessionAutoCancelled({required this.reason});
+  @override
+  List<Object?> get props => [reason];
+}

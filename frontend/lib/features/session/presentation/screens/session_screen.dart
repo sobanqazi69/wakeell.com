@@ -80,7 +80,11 @@ class _SessionScreenState extends State<SessionScreen> {
             if (state is SessionConnected) {
               _listener?.dispose();
               _listener = state.room.createListener()
-                ..on<ParticipantConnectedEvent>((_) => setState(() {}))
+                ..on<ParticipantConnectedEvent>((_) {
+                  // Mark that the other party showed up — unlocks endSession
+                  context.read<SessionCubit>().notifyRemoteJoined();
+                  setState(() {});
+                })
                 ..on<ParticipantDisconnectedEvent>((_) {
                   final s = context.read<SessionCubit>().state;
                   if (s is SessionConnected && s.room.remoteParticipants.isEmpty) {
@@ -109,6 +113,9 @@ class _SessionScreenState extends State<SessionScreen> {
               } else {
                 Navigator.of(context).pop();
               }
+            }
+            if (state is SessionAutoCancelled) {
+              _showAutoCancelledDialog(context, state.reason);
             }
           },
           builder: (context, state) {
@@ -308,6 +315,30 @@ class _SessionScreenState extends State<SessionScreen> {
           style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14),
         ),
       ])),
+    );
+  }
+
+  Future<void> _showAutoCancelledDialog(BuildContext ctx, String reason) async {
+    await showDialog<void>(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: Text('Session Cancelled',
+          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
+        content: Text(reason,
+          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);         // close dialog
+              Navigator.of(ctx).pop();    // leave session screen
+            },
+            child: Text('OK', style: GoogleFonts.outfit(
+              color: Colors.redAccent, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 

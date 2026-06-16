@@ -20,8 +20,9 @@ const Booking = sequelize.define('Booking', {
   reminderSent30:  { type: DataTypes.BOOLEAN, defaultValue: false },
   reminderSent15:  { type: DataTypes.BOOLEAN, defaultValue: false },
   reminderSent5:   { type: DataTypes.BOOLEAN, defaultValue: false },
-  startedAt:      { type: DataTypes.DATE, allowNull: true, defaultValue: null },
-  endedAt:        { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+  startedAt:          { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+  endedAt:            { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+  cancellationReason: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
 }, {
   tableName: 'bookings',
   underscored: true,

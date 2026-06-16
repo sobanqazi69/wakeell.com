@@ -2,6 +2,51 @@ const { v4: uuidv4 } = require('uuid');
 const { AccessToken } = require('livekit-server-sdk');
 const { Session, Booking, User } = require('../models');
 
+// Socket.io instance — set by index.js after server starts
+let _io = null;
+exports.setIo = (io) => { _io = io; };
+
+// In-memory no-show timers: bookingId → timeoutId
+const _noShowTimers = {};
+
+function _scheduleNoShowCheck(session, booking) {
+  if (!_io) return;
+
+  // Cancel any existing timer for this booking
+  if (_noShowTimers[session.bookingId]) {
+    clearTimeout(_noShowTimers[session.bookingId]);
+  }
+
+  // Fire 5 minutes after the scheduled booking start time
+  const bookingStart = new Date(`${booking.date}T${booking.timeSlot}:00`);
+  const now = new Date();
+  const msUntilDeadline = Math.max(bookingStart.getTime() - now.getTime(), 0) + 5 * 60 * 1000;
+
+  _noShowTimers[session.bookingId] = setTimeout(async () => {
+    try {
+      delete _noShowTimers[session.bookingId];
+
+      const fresh = await Session.findByPk(session.id);
+      if (!fresh) return;
+      if (fresh.lawyerJoined) return;    // lawyer showed up — all good
+      if (fresh.status === 'ended') return; // already ended normally
+
+      const bk = await Booking.findByPk(session.bookingId);
+      if (!bk || bk.status !== 'accepted') return; // booking already resolved
+
+      await fresh.update({ status: 'ended' });
+      await bk.update({ status: 'cancelled', cancellationReason: 'Lawyer did not join' });
+
+      _io.to(fresh.roomId).emit('session_auto_cancelled', {
+        bookingId: session.bookingId,
+        reason: 'Lawyer did not join',
+      });
+    } catch (e) {
+      console.error('[session.noShowTimer]', e.message);
+    }
+  }, msUntilDeadline);
+}
+
 exports.createSession = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.bookingId);
@@ -13,7 +58,6 @@ exports.createSession = async (req, res) => {
     const isParty = booking.clientId === req.user.id || booking.lawyerId === req.user.id;
     if (!isParty) return res.status(403).json({ message: 'Access denied' });
 
-    // Idempotent — return existing session if already created
     let session = await Session.findOne({ where: { bookingId: booking.id } });
     if (!session) {
       const roomId = uuidv4();
@@ -72,21 +116,39 @@ exports.joinToken = async (req, res) => {
     const at = new AccessToken(apiKey, apiSecret, {
       identity,
       name: req.user.name || identity,
-      ttl: 3600, // 1 hour
+      ttl: 3600,
     });
     at.addGrant({ roomJoin: true, room: session.roomId, canPublish: true, canSubscribe: true });
-
     const token = await at.toJwt();
 
-    // Track who has joined
-    if (booking.clientId === req.user.id && !session.clientJoined) {
+    // Track who has joined and handle no-show timer
+    const isClient = booking.clientId === req.user.id;
+    const isLawyer = booking.lawyerId === req.user.id;
+    const wasClientJoined = session.clientJoined;
+    const wasLawyerJoined = session.lawyerJoined;
+
+    if (isClient && !session.clientJoined) {
       await session.update({ clientJoined: true });
     }
-    if (booking.lawyerId === req.user.id && !session.lawyerJoined) {
+    if (isLawyer && !session.lawyerJoined) {
       await session.update({ lawyerJoined: true });
+      // Lawyer arrived — cancel any pending no-show timer
+      if (_noShowTimers[booking.id]) {
+        clearTimeout(_noShowTimers[booking.id]);
+        delete _noShowTimers[booking.id];
+      }
     }
+
+    await session.reload();
+
     if (!session.startedAt && session.clientJoined && session.lawyerJoined) {
       await session.update({ status: 'active', startedAt: new Date() });
+    }
+
+    // If the client just joined for the first time and the lawyer hasn't arrived,
+    // schedule the no-show check (fires 5 min after the booking's scheduled start)
+    if (isClient && !wasClientJoined && !session.lawyerJoined) {
+      _scheduleNoShowCheck(session, booking);
     }
 
     return res.json({ token, wsUrl, roomId: session.roomId, sessionId: session.id });
@@ -104,12 +166,23 @@ exports.endSession = async (req, res) => {
     const isParty = booking.clientId === req.user.id || booking.lawyerId === req.user.id;
     if (!isParty) return res.status(403).json({ message: 'Access denied' });
 
+    const session = await Session.findOne({ where: { bookingId: booking.id } });
+
+    // Only complete if both parties actually connected — prevents early-join/early-leave
+    // from permanently closing the session before it even started.
+    if (!session || session.status !== 'active') {
+      return res.json({ message: 'Session not yet active — no changes made' });
+    }
+
+    // Cancel any pending no-show timer since the session ended normally
+    if (_noShowTimers[booking.id]) {
+      clearTimeout(_noShowTimers[booking.id]);
+      delete _noShowTimers[booking.id];
+    }
+
     if (booking.status !== 'completed') {
       await booking.update({ status: 'completed', endedAt: new Date() });
-      const session = await Session.findOne({ where: { bookingId: booking.id } });
-      if (session && session.status !== 'ended') {
-        await session.update({ status: 'ended', endedAt: new Date() });
-      }
+      await session.update({ status: 'ended', endedAt: new Date() });
     }
 
     return res.json({ message: 'Session ended' });
@@ -127,7 +200,6 @@ exports.writeAdviceSummary = async (req, res) => {
     const session = await Session.findOne({ where: { bookingId: req.params.bookingId } });
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    // Only the lawyer can write the summary
     const booking = await Booking.findByPk(req.params.bookingId);
     if (booking.lawyerId !== req.user.id) {
       return res.status(403).json({ message: 'Only the lawyer can write the advice summary' });

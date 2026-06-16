@@ -186,7 +186,7 @@ class WakeellApp extends StatelessWidget {
             final args =
                 ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
             return BlocProvider(
-              create: (_) => SessionCubit(getIt<SessionRepository>()),
+              create: (_) => SessionCubit(getIt<SessionRepository>(), getIt<SocketService>()),
               child: SessionScreen(
                 bookingId: args['bookingId'] as int,
                 otherPartyName: args['otherPartyName'] as String,
